@@ -222,9 +222,10 @@ details.awtip summary::-webkit-details-marker{display:none;}
           <span class="sub">Desafío Atleta Híbrido · Andres</span>
         </div>
       </div>
-      <div class="streak" id="streakBox" title="Días seguidos cumpliendo">🔥 <span class="n" id="streakN">0</span></div>
-      <div class="streak" onclick="cycleLevel()" title="Nivel de corrida (toca para cambiar)" style="cursor:pointer">🏃 Nv.<span class="n" id="levelN">1</span></div>
+      <div class="streak" id="streakBox" title="Entrenamientos completados este mes">🔥 <span class="n" id="streakN">0</span></div>
+      <div class="streak" onclick="cycleLevel()" title="Nivel de corrida" style="cursor:pointer">🏃 Nv.<span class="n" id="levelN">1</span></div>
     </div>
+    <div id="headerInfo" style="display:flex;gap:8px;margin-top:8px;font-size:.74rem;flex-wrap:wrap"></div>
   </header>
 
   <main>
@@ -455,6 +456,19 @@ const SLOTS = [
   {k:'janta',ic:'🌙', name:'Cena', desc:'Omelet c/ vegetales · ensalada+carne+arroz integral · pollo c/ puré', obj:'Ligera, sin carbo rápido, buen sueño'},
 ];
 const REGLAS = ['Toda comida lleva proteína','Evitar dulce y fritura en días de entreno','Beber 3 L de agua al día (mínimo)'];
+const MEALS_PLAN = [
+  {k:'desayuno', ic:'🌅', name:'Desayuno', items:'2 huevos + 3 claras · 40g queso blanco · 1 tortilla integral · 1 banana · café negro · ½ aguacate', cal:485, p:42, c:38, f:22},
+  {k:'merienda', ic:'🥤', name:'Merienda AM', items:'Batido proteína 25g en agua · 1 fruta', cal:220, p:28, c:25, f:2},
+  {k:'almuerzo', ic:'🍗', name:'Almuerzo', items:'150g carbohidrato (papa/camote/espaguetis) · 250g pechuga de pollo', cal:520, p:55, c:50, f:8},
+  {k:'cafe', ic:'☕', name:'Café tarde', items:'Café negro · batido proteína en agua · 1 galleta', cal:200, p:27, c:18, f:3},
+  {k:'cena', ic:'🥗', name:'Cena', items:'Verduras · 180g pechuga pollo (alt: 180g atún en agua, 250g pollo)', cal:290, p:48, c:8, f:6},
+];
+const MEALS_BASE_CAL=1712, MEALS_BASE_P=200;
+const CARB_EXTRA={
+  gym:{extra:'+197g carbos', cal:'+~788 kcal', total:'~2,500', sugg:'+1 taza arroz (+200kcal) · +1 banana (+100kcal) · +1 camote mediano (+150kcal) · +pan integral (+138kcal) · +avena 50g (+200kcal)'},
+  cardio:{extra:'+122g carbos', cal:'+~488 kcal', total:'~2,200', sugg:'+1 taza arroz · +1 banana · +1 fruta'},
+  rest:{extra:'+97g carbos', cal:'+~388 kcal', total:'~2,100', sugg:'+½ taza arroz · +1 banana'},
+};
 const RECETAS = [
   {n:'Tapioca de Pollo', cal:510, p:42, c:73, g:7, tag:'pos', ing:['100g goma de tapioca','100g pollo deshilachado (sazonado)','30g mozzarella light'], prep:'Distribuí la goma de tapioca uniforme en sartén antiadherente (fuego bajo). A los ~2 min voltea y deja firme. Rellena con pollo y queso. Opcional: lechuga y tomate.'},
   {n:'Crepe de Pollo en sartén', cal:472, p:45, c:42, g:12.5, tag:'pos', ing:['1 huevo','60g harina de goma de tapioca','60ml leche descremada','sal','1/2 tapa de polvo de hornear','100g pollo grillado en cubos','50g requesón light'], prep:'Mezcla huevo, tapioca, leche, sal y polvo hasta homogéneo. Calienta sartén, vierte la masa, tras 1 min agrega pollo y requesón en media luna. Dora ambos lados.'},
@@ -515,6 +529,9 @@ function load(){
   s.measures = s.measures || [];
   s.frase = s.frase || {};       // ISO -> idx
   s.level = s.level || 1;
+  s.monthlyWorkouts = s.monthlyWorkouts || {};
+  s.calsBurned = s.calsBurned || {};
+  s.photos = s.photos || [];
   // init sessions
   SESSIONS.forEach(se=>{ if(!s.sessions[se.id]) s.sessions[se.id]={done:false, day:se.dayDef}; });
   return s;
@@ -573,19 +590,39 @@ function zColor(z){ return ZONAS.find(x=>x.z===z).color; }
 function zPctLabel(z){ const zz=ZONAS.find(x=>x.z===z); return zz.pct[0]+'-'+zz.pct[1]+'%'; }
 function zBpm(z){ const zz=ZONAS.find(x=>x.z===z); return bpm(zz.pct[0])+'-'+bpm(zz.pct[1])+' bpm'; }
 
-/* recompute streak: días consecutivos (hasta ayer/hoy) con al menos su sesión hecha o hábitos */
 function computeStreak(){
-  // cuenta días seguidos terminando hoy donde se completó la sesión asignada (o, en días sin sesión, ≥3 hábitos)
-  let streak=0;
-  for(let back=0; back<60; back++){
-    const dt=new Date(); dt.setDate(dt.getDate()-back);
-    const iso=dt.toISOString().slice(0,10);
-    const h=S.habits[iso];
-    const did = h && (h.cafe||h.pre||h.pos||h.janta||h.water>0||(h.am&&h.am.length)||(h.pm&&h.pm.length));
-    if(did) streak++;
-    else { if(back===0) continue; break; }
+  const now=new Date();
+  const ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  if(!S.monthlyWorkouts) S.monthlyWorkouts={};
+  return (S.monthlyWorkouts[ym]||[]).length;
+}
+function logWorkoutDay(){
+  const now=new Date(), ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  if(!S.monthlyWorkouts) S.monthlyWorkouts={};
+  if(!S.monthlyWorkouts[ym]) S.monthlyWorkouts[ym]=[];
+  const today=todayISO();
+  if(!S.monthlyWorkouts[ym].includes(today)) S.monthlyWorkouts[ym].push(today);
+  save();
+}
+
+function updateHeaderInfo(){
+  const el=document.getElementById('headerInfo'); if(!el) return;
+  const dow=new Date().getDay()||7; // 1=Mon...7=Sun
+  const dayNames={1:'Push',2:'Stair',3:'Pull',4:'Legs',5:'Upper',6:'Run',7:'Descanso'};
+  const dayType=NUTRI.dias[dow];
+  const calTarget=dayType==='gym'?'2,500':dayType==='cardio'?'2,200':'2,100';
+
+  // Week in cycle
+  let weekStr='Sin ciclo';
+  if(S.cycleStart){
+    let weeks=Math.floor((new Date(todayISO()+'T00:00:00')-new Date(S.cycleStart+'T00:00:00'))/604800000)+1;
+    if(weeks>7){ weeks=((weeks-1)%7)+1; } // auto-restart
+    const phase=weeks<=2?'Adaptación':weeks<=4?'Construcción':weeks<=6?'Intensificación':'Deload';
+    weekStr='Sem '+weeks+'/7 · '+phase;
   }
-  return streak;
+
+  el.innerHTML=`<span style="background:var(--surface2);padding:3px 9px;border-radius:12px;border:1px solid var(--border)">${weekStr}</span>
+    <span style="background:var(--surface2);padding:3px 9px;border-radius:12px;border:1px solid var(--border)">Hoy: ${dayNames[dow]} → Meta ${calTarget} kcal</span>`;
 }
 
 /* =================================================================
@@ -626,15 +663,17 @@ function renderHoy(){
     </div>
     <div class="affirm" style="margin:14px 0">"${frase}"</div>`;
 
-  // RITUAL MAÑANA
-  html += `<div class="section-h">☀️ Ritual de la mañana (5AM)</div><div class="card">`;
-  RITUAL_AM.forEach((r,i)=>{
-    const on = h.am.includes(i);
-    html += `<div class="row" style="padding:9px 0;cursor:pointer" onclick="toggleRitual('am',${i})">
-      <div class="chk ${on?'on':''}"></div>
-      <div style="font-size:.9rem;${on?'color:var(--text2);text-decoration:line-through':''}">${r}</div></div>`;
-  });
-  html += `</div>`;
+  // Sub-tabs for Hoy view
+  if(!S._hoyTab) S._hoyTab='hoy';
+  html+=`<div style="display:flex;gap:0;margin:0 0 14px;background:var(--surface2);border-radius:8px;overflow:hidden">
+    <button style="flex:1;padding:8px;text-align:center;font-size:.78rem;font-weight:700;background:${S._hoyTab==='hoy'?'var(--lime)':'none'};border:none;color:${S._hoyTab==='hoy'?'#0b1220':'var(--text2)'};font-family:inherit;cursor:pointer" onclick="S._hoyTab='hoy';renderHoy()">Hoy</button>
+    <button style="flex:1;padding:8px;text-align:center;font-size:.78rem;font-weight:700;background:${S._hoyTab==='reporte'?'var(--lime)':'none'};border:none;color:${S._hoyTab==='reporte'?'#0b1220':'var(--text2)'};font-family:inherit;cursor:pointer" onclick="S._hoyTab='reporte';renderHoy()">Reporte</button>
+  </div>`;
+
+  if(S._hoyTab==='reporte'){
+    html+=renderReport();
+    el.innerHTML=html; return;
+  }
 
   // ATRASADAS
   if(late.length){
@@ -656,33 +695,29 @@ function renderHoy(){
       <button class="btn btn-lime btn-block" style="margin-top:11px" onclick="go('medidas')">Ir a Medidas →</button></div>`;
   }
 
-  // COMIDAS
-  html += `<div class="section-h">🍽️ Comidas de hoy</div><div class="card pad0" style="padding:13px">`;
-  SLOTS.forEach(sl=>{
-    if(cd===7 && (sl.k==='pre'||sl.k==='pos')) return; // descanso: sin pre/pos
-    html += `<div class="row" style="padding:11px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="toggleMeal('${sl.k}')">
-      <div class="chk ${h[sl.k]?'on':''}"></div>
-      <div style="font-size:1.35rem">${sl.ic}</div>
-      <div style="flex:1"><div style="font-weight:700;font-size:.88rem">${sl.name}</div><div class="sdesc">${sl.desc}</div></div>
-    </div>`;
-  });
-  html += `<div style="text-align:right;margin-top:8px"><span class="timerbtn" onclick="go('comida')">Ver recetas →</span></div></div>`;
+  // CALORÍAS QUEMADAS
+  html += `<div class="section-h">🔥 Calorías quemadas (smartwatch)</div>
+    <div class="card"><div class="row" style="gap:10px">
+      <span style="font-size:1.3rem">🔥</span>
+      <input type="number" inputmode="numeric" placeholder="kcal" value="${S.calsBurned[iso]||''}"
+        onchange="S.calsBurned[todayISO()]=parseInt(this.value)||0;save()" style="flex:1">
+      <span class="muted" style="font-size:.78rem">kcal hoy</span>
+    </div></div>`;
 
-  // AGUA
-  const cups=8;
-  html += `<div class="section-h">💧 Agua (meta 3 L · ${h.water}/${cups} vasos)</div><div class="card"><div class="water">`;
-  for(let i=1;i<=cups;i++) html += `<div class="drop ${i<=h.water?'on':''}" onclick="setWater(${i})"></div>`;
-  html += `</div></div>`;
-
-  // RITUAL NOCHE
-  html += `<div class="section-h">🌙 Checklist nocturno (preparar el 5AM)</div><div class="card">`;
-  RITUAL_PM.forEach((r,i)=>{
-    const on = h.pm.includes(i);
-    html += `<div class="row" style="padding:9px 0;cursor:pointer" onclick="toggleRitual('pm',${i})">
+  // COMIDAS (simplified in Hoy view)
+  const dayType2=NUTRI.dias[new Date().getDay()||7];
+  const ce2=CARB_EXTRA[dayType2];
+  if(!S.habits[iso]) S.habits[iso]={meals:{}};
+  const hm2=S.habits[iso].meals||{};
+  html += `<div class="section-h">🍽️ Comidas de hoy · Meta ${ce2.total} kcal</div><div class="card pad0" style="padding:13px">`;
+  MEALS_PLAN.forEach(m=>{
+    const on=!!hm2[m.k];
+    html+=`<div class="row" style="padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;${on?'opacity:.6':''}" onclick="toggleMealNew('${m.k}')">
       <div class="chk ${on?'on':''}"></div>
-      <div style="font-size:.9rem;${on?'color:var(--text2);text-decoration:line-through':''}">${r}</div></div>`;
+      <span style="font-size:1.1rem">${m.ic}</span>
+      <div style="flex:1;font-size:.85rem"><b>${m.name}</b> <span class="muted">${m.cal} kcal</span></div></div>`;
   });
-  html += `</div>`;
+  html += `<div style="text-align:right;margin-top:8px"><span class="timerbtn" onclick="go('comida')">Ver detalle + recetas →</span></div></div>`;
 
   el.innerHTML=html;
 }
@@ -1158,48 +1193,65 @@ function startRest(restStr){
 let recipeFilter='all';
 function renderComida(){
   const el=document.getElementById('v-comida');
-  let html=`<h2 class="title">Nutrición Híbrida</h2><p class="muted">Practicidad &gt; perfección · Comer con estrategia · Constancia &gt; restricción.</p>`;
+  const iso=todayISO();
+  const dow=new Date().getDay()||7;
+  const dayType=NUTRI.dias[dow];
+  const ce=CARB_EXTRA[dayType];
+  if(!S.habits[iso]) S.habits[iso]={meals:{}};
+  const hm=S.habits[iso].meals||{};
 
-  // 4 comidas clave
-  html+=`<div class="section-h">Las 4 comidas clave</div>`;
-  SLOTS.forEach(sl=>{
-    html+=`<div class="slot"><div class="si">${sl.ic}</div><div style="flex:1">
-      <div class="sname">${sl.name}</div><div class="sdesc">${sl.desc}</div>
-      <div style="font-size:.72rem;color:var(--lime);margin-top:3px">🎯 ${sl.obj}</div></div></div>`;
+  let checkedCal=0;
+  MEALS_PLAN.forEach(m=>{if(hm[m.k]) checkedCal+=m.cal;});
+
+  let html=`<h2 class="title">Nutrición</h2>
+    <div class="card" style="text-align:center"><div class="row between" style="margin-bottom:6px">
+      <span class="muted">Base: ${MEALS_BASE_CAL} kcal</span><span class="muted">${ce.cal} extra carbos</span>
+      <b style="color:var(--lime);font-size:1.05rem">Meta: ${ce.total} kcal</b></div>
+      <div class="bar"><i style="width:${Math.min(100,Math.round(checkedCal/parseInt(ce.total.replace(/[~,]/g,''))*100))}%"></i></div>
+      <div class="muted" style="margin-top:6px;font-size:.78rem">Comidas marcadas: ${checkedCal} kcal · Proteína base: ~${MEALS_BASE_P}g</div></div>`;
+
+  // Carb cycling card
+  html+=`<div class="card" style="border-left:3px solid var(--lime);background:rgba(194,249,79,.04)">
+    <div style="font-weight:700;font-size:.9rem;color:var(--lime)">Día de ${dayType==='gym'?'Gym':dayType==='cardio'?'Cardio':'Descanso'} → ${ce.extra}</div>
+    <div class="muted" style="margin-top:4px;font-size:.82rem">Distribuí entre las comidas: ${ce.sugg}</div></div>`;
+
+  // Meal cards
+  html+=`<div class="section-h">5 comidas del día</div>`;
+  MEALS_PLAN.forEach(m=>{
+    const on=!!hm[m.k];
+    html+=`<div class="card" style="padding:12px;${on?'opacity:.6':''}">
+      <div class="row" style="cursor:pointer" onclick="toggleMealNew('${m.k}')">
+        <div class="chk ${on?'on':''}"></div>
+        <div style="font-size:1.3rem">${m.ic}</div>
+        <div style="flex:1"><div style="font-weight:700;font-size:.88rem">${m.name} <span style="color:var(--lime);font-size:.78rem">${m.cal} kcal</span></div>
+          <div class="muted" style="font-size:.78rem">${m.items}</div></div>
+      </div>
+      <div class="macros" style="margin:6px 0 0"><div class="macro"><b>${m.p}g</b><span>Prot</span></div>
+        <div class="macro"><b>${m.c}g</b><span>Carb</span></div><div class="macro"><b>${m.f}g</b><span>Grasa</span></div></div>
+    </div>`;
   });
 
-  // reglas
-  html+=`<div class="section-h">3 reglas simples</div><div class="card">`;
-  REGLAS.forEach(r=> html+=`<div class="row" style="padding:6px 0"><span style="color:var(--lime)">✓</span><span style="font-size:.88rem">${r}</span></div>`);
-  html+=`</div>`;
-
-  // recetas
+  // Keep recipes
   html+=`<div class="section-h">Recetario (${RECETAS.length} recetas)</div>`;
   const filters=[['all','Todas'],['cafe','☀️ Café'],['pre','⚡ Pre'],['pos','💪 Post'],['janta','🌙 Cena'],['lanche','🥜 Snack'],['sobremesa','🍨 Postre']];
   html+=`<div class="row" style="gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px">`;
-  filters.forEach(f=> html+=`<button class="btn ${recipeFilter===f[0]?'btn-lime':'btn-ghost'} btn-sm" style="white-space:nowrap" onclick="recipeFilter='${f[0]}';renderComida()">${f[1]}</button>`);
+  filters.forEach(f=> html+=`<button class="btn btn-ghost btn-sm" style="white-space:nowrap" onclick="this.parentElement.querySelectorAll('.btn').forEach(b=>b.classList.remove('btn-lime'));this.classList.add('btn-lime');document.querySelectorAll('.rec-card').forEach(c=>c.style.display=('${f[0]}'==='all'||c.dataset.tag==='${f[0]}')?'block':'none')">${f[1]}</button>`);
   html+=`</div>`;
-
-  RECETAS.filter(r=>recipeFilter==='all'||r.tag===recipeFilter).forEach((r,idx)=>{
-    const realIdx=RECETAS.indexOf(r);
-    html+=`<div class="recipe" id="rec${realIdx}">
-      <div class="rh" onclick="document.getElementById('rec${realIdx}').classList.toggle('open')">
+  RECETAS.forEach((r,idx)=>{
+    html+=`<div class="recipe rec-card" data-tag="${r.tag}" id="rec${idx}">
+      <div class="rh" onclick="document.getElementById('rec${idx}').classList.toggle('open')">
         <div><div class="rn">${r.n}</div><div class="muted" style="font-size:.74rem">${slotName(r.tag)}</div></div>
         <div style="text-align:right"><div class="rcal">${r.cal} kcal</div><div class="chev">▾</div></div>
       </div>
       <div class="rbody">
-        <div class="macros">
-          <div class="macro"><b>${r.p}g</b><span>Proteína</span></div>
-          <div class="macro"><b>${r.c}g</b><span>Carbo</span></div>
-          <div class="macro"><b>${r.g}g</b><span>Grasa</span></div>
-        </div>
+        <div class="macros"><div class="macro"><b>${r.p}g</b><span>Proteína</span></div><div class="macro"><b>${r.c}g</b><span>Carbo</span></div><div class="macro"><b>${r.g}g</b><span>Grasa</span></div></div>
         <div style="font-weight:700;font-size:.78rem;color:var(--text2)">INGREDIENTES</div>
-        <ul>${r.ing.map(i=>`<li>${i}</li>`).join('')}</ul>
+        <ul>${r.ing.map(i=>'<li>'+i+'</li>').join('')}</ul>
         <div class="prep"><b style="color:var(--text)">Preparación:</b> ${r.prep}</div>
       </div></div>`;
   });
 
-  // hacks
+  // Hacks
   html+=`<div class="section-h">Hacks para la vida ocupada</div>`;
   HACKS.forEach(h=> html+=`<div class="flat" style="margin-bottom:8px"><b style="font-size:.88rem">${h.t}</b><div class="muted" style="font-size:.82rem;margin-top:3px">${h.d}</div></div>`);
 
@@ -1297,6 +1349,32 @@ function renderMedidas(){
     });
     html+=`</div>`;
   }
+
+  // FOTOS DE PROGRESO
+  html+=`<div class="section-h">📸 Fotos de progreso</div>
+    <div class="card">
+      <div class="muted" style="font-size:.82rem;margin-bottom:10px">Subí una foto de espejo cada día o semana. Se guarda localmente en tu navegador.</div>
+      <label class="btn btn-ghost btn-block" style="cursor:pointer">
+        📷 Subir foto de hoy
+        <input type="file" accept="image/*" capture="environment" style="display:none" onchange="savePhoto(this)">
+      </label>
+    </div>`;
+  if(S.photos&&S.photos.length){
+    html+=`<div class="card pad0" style="padding:13px">
+      <div style="font-weight:700;margin-bottom:8px">Últimas fotos (${S.photos.length})</div>
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px">`;
+    S.photos.slice(-10).reverse().forEach((p,i)=>{
+      html+=`<div style="flex-shrink:0;text-align:center">
+        <img src="${p.data}" style="width:80px;height:106px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">
+        <div style="font-size:.65rem;color:var(--text2);margin-top:3px">${p.date}</div></div>`;
+    });
+    html+=`</div>`;
+    if(S.photos.length>=2){
+      html+=`<button class="btn btn-ghost btn-block" style="margin-top:8px" onclick="showPhotoCarousel()">🖼 Ver carrusel de progreso</button>`;
+    }
+    html+=`</div>`;
+  }
+
   el.innerHTML=html;
 }
 function fmtDate(iso){ const [y,m,d]=iso.split('-'); return `${d}/${m}`; }
@@ -1404,8 +1482,7 @@ function newWeek(){
 }
 function completeSession(id){
   const st=S.sessions[id]; st.done=!st.done; save();
-  // marcar habit del día como activo (para streak)
-  const iso=todayISO(); habit(iso); save();
+  if(st.done) logWorkoutDay();
   S.streak=computeStreak();
   if(st.done) toast('✓ Sesión completada');
   renderAll();
@@ -1422,6 +1499,83 @@ function toggleRitual(period,i){
   const h=habit(todayISO()); const arr=h[period];
   const idx=arr.indexOf(i); if(idx>=0)arr.splice(idx,1); else arr.push(i);
   save(); S.streak=computeStreak(); renderHoy(); document.getElementById('streakN').textContent=S.streak;
+}
+function toggleMealNew(k){
+  const iso=todayISO();
+  if(!S.habits[iso]) S.habits[iso]={meals:{}};
+  if(!S.habits[iso].meals) S.habits[iso].meals={};
+  S.habits[iso].meals[k]=!S.habits[iso].meals[k];
+  save(); renderComida(); renderHoy();
+}
+function renderReport(){
+  let html='';
+  const now=new Date(), ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const monthDays=S.monthlyWorkouts&&S.monthlyWorkouts[ym]?S.monthlyWorkouts[ym].length:0;
+
+  // Weekly calories burned
+  const weekCals=[];
+  const dayNames=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const iso=d.toISOString().slice(0,10);
+    weekCals.push({day:dayNames[(d.getDay()+6)%7],cal:S.calsBurned[iso]||0,iso});
+  }
+  const totalWeekCals=weekCals.reduce((a,b)=>a+b.cal,0);
+  const maxCal=Math.max(...weekCals.map(w=>w.cal),1);
+
+  html+=`<div class="section-h">📊 Reporte semanal</div>`;
+
+  // Cal burned chart
+  html+=`<div class="card"><div style="font-weight:700;margin-bottom:10px">Calorías quemadas (últimos 7 días)</div>
+    <div style="display:flex;align-items:flex-end;gap:6px;height:120px;padding-bottom:20px;position:relative">`;
+  weekCals.forEach(w=>{
+    const h=w.cal?Math.max(8,Math.round(w.cal/maxCal*100)):4;
+    html+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+      <span style="font-size:.65rem;color:var(--text2)">${w.cal||'—'}</span>
+      <div style="width:100%;height:${h}px;background:${w.cal?'var(--lime)':'var(--surface2)'};border-radius:4px"></div>
+      <span style="font-size:.6rem;color:var(--text3)">${w.day}</span></div>`;
+  });
+  html+=`</div><div class="muted" style="text-align:center;margin-top:4px">Total semana: <b style="color:var(--lime)">${totalWeekCals} kcal</b></div></div>`;
+
+  // Stats
+  const done=SESSIONS.filter(se=>S.sessions[se.id].done).length;
+  const dow=new Date().getDay()||7;
+  const dayType=NUTRI.dias[dow];
+  const calTarget=dayType==='gym'?'2,500':dayType==='cardio'?'2,200':'2,100';
+
+  html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+    <div class="card" style="text-align:center;padding:12px"><div style="font-size:1.6rem;font-weight:800;color:var(--lime)">${done}/${SESSIONS.length}</div><div class="muted" style="font-size:.74rem">Sesiones esta semana</div></div>
+    <div class="card" style="text-align:center;padding:12px"><div style="font-size:1.6rem;font-weight:800;color:var(--lime)">${calTarget}</div><div class="muted" style="font-size:.74rem">Meta kcal hoy</div></div>
+    <div class="card" style="text-align:center;padding:12px"><div style="font-size:1.6rem;font-weight:800;color:var(--orange)">🔥 ${monthDays}</div><div class="muted" style="font-size:.74rem">Entrenamientos este mes</div></div>
+    <div class="card" style="text-align:center;padding:12px"><div style="font-size:1.6rem;font-weight:800;color:var(--aqua)">${totalWeekCals}</div><div class="muted" style="font-size:.74rem">kcal quemadas semana</div></div>
+  </div>`;
+
+  // Body measurements vs goals
+  const measures=S.measures.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  if(measures.length){
+    const latest=measures[measures.length-1];
+    html+=`<div class="card"><div style="font-weight:700;margin-bottom:8px">Medidas vs Metas</div>`;
+    METRICS.filter(m=>m.target!=null).forEach(mt=>{
+      const cur=latest.m[mt.k];
+      if(cur==null) return;
+      const tgt=mt.target;
+      const diff=+(cur-tgt).toFixed(1);
+      const good=mt.rev?(diff<0):(diff>0||diff===0);
+      const arrow=diff>0?'↑':diff<0?'↓':'→';
+      html+=`<div class="row between" style="padding:5px 0;border-bottom:1px solid var(--border);font-size:.82rem">
+        <span>${mt.ic} ${mt.label}</span>
+        <span><b>${cur}</b> → <span style="color:var(--lime)">${tgt}</span>
+          <span style="color:${good?'var(--green)':'var(--red)'};font-weight:700">${arrow} ${Math.abs(diff)}</span></span></div>`;
+    });
+    html+=`<div class="muted" style="font-size:.72rem;margin-top:6px">Última medición: ${latest.date}</div></div>`;
+  }
+
+  // Photo link
+  if(S.photos&&S.photos.length>=2){
+    html+=`<button class="btn btn-ghost btn-block" onclick="go('medidas')">🖼 Ver fotos de progreso →</button>`;
+  }
+
+  return html;
 }
 function saveMeasure(){
   const date=document.getElementById('mDate').value || todayISO();
@@ -1444,6 +1598,57 @@ function setLevel(lv){
 }
 
 /* =================================================================
+   PHOTOS
+   ================================================================= */
+function savePhoto(input){
+  if(!input.files||!input.files[0]) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const img=new Image();
+    img.onload=function(){
+      const canvas=document.createElement('canvas');
+      const max=400;
+      let w=img.width, h=img.height;
+      if(w>h){if(w>max){h*=max/w;w=max;}}else{if(h>max){w*=max/h;h=max;}}
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const data=canvas.toDataURL('image/jpeg',0.6);
+      if(!S.photos) S.photos=[];
+      S.photos.push({date:todayISO(),data});
+      save(); toast('📸 Foto guardada'); renderMedidas();
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+function showPhotoCarousel(){
+  if(!S.photos||S.photos.length<2){toast('Necesitas al menos 2 fotos');return;}
+  let idx=S.photos.length-1;
+  const div=document.createElement('div');
+  div.className='player'; div.style.display='flex';
+  function render(){
+    const p=S.photos[idx];
+    div.innerHTML=`<div class="player-inner" style="align-items:center;justify-content:center;text-align:center">
+      <div class="player-top" style="width:100%"><button class="btn btn-ghost btn-sm" onclick="this.closest('.player').remove()">✕ Cerrar</button>
+        <span class="muted">${idx+1} de ${S.photos.length}</span></div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:16px">
+        <img src="${p.data}" style="max-width:100%;max-height:70vh;border-radius:12px;border:2px solid var(--border)"></div>
+      <div style="font-weight:700;font-size:1rem;margin-bottom:12px">${p.date}</div>
+      <div class="player-controls" style="width:100%">
+        <button class="btn btn-ghost" id="pcPrev">⏮ Antes</button>
+        <button class="btn btn-ghost" id="pcNext">Después ⏭</button>
+      </div></div>`;
+    const prevBtn=div.querySelector('#pcPrev'), nextBtn=div.querySelector('#pcNext');
+    if(idx<=0) prevBtn.disabled=true;
+    if(idx>=S.photos.length-1) nextBtn.disabled=true;
+    prevBtn.onclick=()=>{if(idx>0){idx--;render();}};
+    nextBtn.onclick=()=>{if(idx<S.photos.length-1){idx++;render();}};
+  }
+  render();
+  document.body.appendChild(div);
+}
+
+/* =================================================================
    NAV
    ================================================================= */
 function go(v){
@@ -1459,6 +1664,7 @@ document.querySelectorAll('nav button').forEach(b=> b.onclick=()=>go(b.dataset.v
 function renderAll(){
   S.streak=computeStreak(); document.getElementById('streakN').textContent=S.streak;
   document.getElementById('levelN').textContent=S.level||1;
+  updateHeaderInfo();
   const active=document.querySelector('nav button.active').dataset.v;
   go(active);
 }
@@ -1466,6 +1672,7 @@ function renderAll(){
 /* INIT */
 S.streak=computeStreak(); document.getElementById('streakN').textContent=S.streak;
 document.getElementById('levelN').textContent=S.level||1;
+updateHeaderInfo();
 renderHoy();
 </script>
 </body>
