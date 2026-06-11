@@ -677,7 +677,8 @@ function sessionCard(se, cd, isLate){
       <div class="row" style="gap:8px;margin-top:12px">
         <button class="btn btn-lime btn-sm" style="flex:1" onclick="openGym('${se.id}')">Ver / Entrenar</button>
         <button class="btn btn-ghost btn-sm" onclick="completeSession('${se.id}')">✓ Hecho</button>
-        ${st.day<7?`<button class="btn btn-ghost btn-sm" onclick="moveSession('${se.id}')" title="Mover a mañana">→</button>`:''}
+        ${st.day>1?`<button class="btn btn-ghost btn-sm" onclick="moveSession('${se.id}',-1)" title="Mover un día antes">←</button>`:''}
+        ${st.day<7?`<button class="btn btn-ghost btn-sm" onclick="moveSession('${se.id}',1)" title="Mover un día después">→</button>`:''}
       </div></div>`;
   } else {
     const r=RUNS[se.id];
@@ -697,7 +698,8 @@ function sessionCard(se, cd, isLate){
       <details class="awtip" style="margin-top:9px"><summary>📱 ¿Cómo lo mido con mi Apple Watch?</summary><div style="margin-top:8px">${appleWatchTipHTML()}</div></details>
       <div class="row" style="gap:8px;margin-top:11px">
         <button class="btn btn-ghost btn-sm" style="flex:1" onclick="completeSession('${se.id}')">✓ Corrida hecha</button>
-        ${st.day<7?`<button class="btn btn-ghost btn-sm" onclick="moveSession('${se.id}')" title="Mover a mañana">→ Mañana</button>`:''}
+        ${st.day>1?`<button class="btn btn-ghost btn-sm" onclick="moveSession('${se.id}',-1)">← Antes</button>`:''}
+        ${st.day<7?`<button class="btn btn-ghost btn-sm" onclick="moveSession('${se.id}',1)">Después →</button>`:''}
       </div></div>`;
   }
 }
@@ -894,7 +896,8 @@ function renderSemana(){
             <span class="pill ${se.id==='STAIR'?'stair':se.type}">${se.id==='STAIR'?'Cardio':se.type==='gym'?'Fuerza':'Corrida'}</span>
             <span style="font-size:.8rem;${st.done?'color:var(--text2);text-decoration:line-through':''};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nm}</span>
           </div>
-          ${!st.done && st.day<7?`<button class="btn btn-ghost btn-sm" style="padding:5px 9px" onclick="moveSession('${se.id}')">→</button>`:''}
+          ${!st.done && st.day>1?`<button class="btn btn-ghost btn-sm" style="padding:5px 9px" onclick="moveSession('${se.id}',-1)">←</button>`:''}
+          ${!st.done && st.day<7?`<button class="btn btn-ghost btn-sm" style="padding:5px 9px" onclick="moveSession('${se.id}',1)">→</button>`:''}
         </div>`;
       });
     }
@@ -1285,10 +1288,11 @@ function completeSession(id){
   if(st.done) toast('✓ Sesión completada');
   renderAll();
 }
-function moveSession(id){
+function moveSession(id,dir){
   const st=S.sessions[id];
-  if(st.day>=7){ toast('Ya está en el último día'); return; }
-  st.day++; save(); toast('Movida al Día '+st.day+' →'); renderAll();
+  if(dir===-1 && st.day<=1){ toast('Ya está en el primer día'); return; }
+  if(dir===1 && st.day>=7){ toast('Ya está en el último día'); return; }
+  st.day+=dir; save(); toast((dir===1?'→':'←')+' Movida al Día '+st.day); renderAll();
 }
 function toggleMeal(k){ const h=habit(todayISO()); h[k]=!h[k]; save(); S.streak=computeStreak(); renderHoy(); document.getElementById('streakN').textContent=S.streak; }
 function setWater(n){ const h=habit(todayISO()); h.water = (h.water===n)?n-1:n; save(); S.streak=computeStreak(); renderHoy(); document.getElementById('streakN').textContent=S.streak; }
