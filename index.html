@@ -509,6 +509,8 @@ function load(){
   s.startDate = s.startDate || null;
   s.sessions = s.sessions || {}; // id -> {done, day}
   s.gymlog = s.gymlog || {};     // "TREINO_exIndex_set" -> {w,r}
+  s.weightlog = s.weightlog || {};  // exerciseName -> [{date,w,r}]
+  s.cycleStart = s.cycleStart || null;
   s.habits = s.habits || {};     // ISO -> {cafe,pre,pos,janta,water,am:[],pm:[]}
   s.measures = s.measures || [];
   s.frase = s.frase || {};       // ISO -> idx
@@ -519,6 +521,31 @@ function load(){
 }
 let S = load();
 updateLevel();
+(function migrateOldWeights(){
+  if(S._wMigrated) return;
+  const oldT={
+    A:['Calentamiento / movilidad superiores','Press plano con mancuernas','Cruce inclinado + Press inclinado (mancuernas)','Peck deck + Flexiones a la falla (punto cero)','Desarrollo (press militar) con mancuernas','Tríceps frente (testa) con mancuernas','Tríceps patada + Tríceps con cuerda'],
+    B:['Flexibilidad/movilidad + Sentadilla peso corporal','Peso muerto (Terra / Deadlift)','Mesa flexora (femoral)','Stiff con barra o mancuernas','Leg press 45°','Sentadilla libre + Silla china (a la falla)','Abductora + Pantorrilla de pie'],
+    C:['Calentamiento / movilidad superiores','Remo inclinado con barra','Dominadas / Barra libre — 40 reps totales','Jalón al pecho + Remo con mancuernas','Serrucho (remo unilateral) con mancuerna','Posterior de hombro en polea','Curl bíceps + Encogimiento (trapecio) mancuernas'],
+    D:['Calentamiento / movilidad superiores','Desarrollo (press militar) con mancuernas','Elevación lateral con discos','Elevación frontal con mancuerna','Elevación de piernas + Rolinho (ab-wheel) + Plancha 1 min'],
+    E:['Calentamiento / movilidad superiores','Tríceps frente (testa)','Tríceps cuerda + Bíceps cuerda','Flexión diamante + Curl bíceps barra recta','Tríceps francés + Curl martillo con mancuernas'],
+  };
+  if(!S.weightlog) S.weightlog={};
+  let found=0;
+  Object.entries(oldT).forEach(([t,names])=>{
+    names.forEach((name,idx)=>{
+      const k=t+'_'+idx, d=S.gymlog[k];
+      if(d&&(d.w||d.r)){
+        if(!S.weightlog[name]) S.weightlog[name]=[];
+        if(!S.weightlog[name].find(e=>e.src==='migrated')){
+          S.weightlog[name].push({date:S.startDate||'2026-06-01',w:parseFloat(d.w)||0,r:parseInt(d.r)||0,src:'migrated'});
+          found++;
+        }
+      }
+    });
+  });
+  S._wMigrated=true; if(found>0){ localStorage.setItem(KEY,JSON.stringify(S)); }
+})();
 function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
 
 function habit(iso){
@@ -939,6 +966,7 @@ function renderGym(){
   });
   tabs+=`<button class="btn ${gymOpen==='PROG'?'btn-lime':'btn-ghost'} btn-sm" style="white-space:nowrap" onclick="gymOpen='PROG';renderGym()">Fases</button>`;
   tabs+=`<button class="btn ${gymOpen==='NUTRI'?'btn-lime':'btn-ghost'} btn-sm" style="white-space:nowrap" onclick="gymOpen='NUTRI';renderGym()">Nutrición</button>`;
+  tabs+=`<button class="btn ${gymOpen==='HIST'?'btn-lime':'btn-ghost'} btn-sm" style="white-space:nowrap" onclick="gymOpen='HIST';renderGym()">Cargas</button>`;
   tabs+=`</div>`;
 
   let html=`<h2 class="title">Programa Híbrido</h2><p class="muted">5 días gym + 1 corrida + 1 descanso. Progresión por fases de 7 semanas.</p>${tabs}`;
@@ -977,12 +1005,57 @@ function renderGym(){
     el.innerHTML=html; return;
   }
 
+  // Weight history view
+  if(gymOpen==='HIST'){
+    html+=`<div class="card card-accent"><div style="font-weight:800;font-size:1.05rem">Historial de Cargas</div>
+      <div class="muted" style="margin-top:4px">Todos tus registros de peso por ejercicio. Los datos migrados del programa anterior están incluidos.</div></div>`;
+    const allEx=[];
+    Object.keys(TREINOS).forEach(t=>TREINOS[t].ex.forEach(e=>{if(e.log&&!allEx.includes(e.n))allEx.push(e.n)}));
+    allEx.forEach(name=>{
+      const hist=getExHistory(name);
+      if(!hist.length) return;
+      const last=hist[hist.length-1], first=hist[0], delta=hist.length>=2?last.w-first.w:0;
+      html+=`<div class="card" style="padding:12px">
+        <div class="row between"><b style="font-size:.88rem">${name}</b>
+          <span style="font-weight:700;color:var(--lime);font-size:.9rem">${last.w}kg</span></div>
+        <div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:.74rem;color:var(--text2)">${hist.length} registro${hist.length>1?'s':''}</span>
+          ${delta!==0?`<span style="font-size:.74rem;font-weight:700;color:${delta>0?'var(--green)':'var(--red)'}">${delta>0?'+':''}${delta.toFixed(1)}kg desde inicio</span>`:''}
+        </div>`;
+      if(hist.length>1){
+        html+=`<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">`;
+        hist.slice(-8).forEach(h=>{
+          html+=`<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:3px 0;color:var(--text2)">
+            <span>${h.date}${h.src?' (migrado)':''}</span><span style="color:var(--text);font-weight:600">${h.w}kg × ${h.r}</span></div>`;
+        });
+        if(hist.length>8) html+=`<div style="font-size:.72rem;color:var(--text3);text-align:center;margin-top:4px">... y ${hist.length-8} registros anteriores</div>`;
+        html+=`</div>`;
+      }
+      html+=`</div>`;
+    });
+    const oldKeys=Object.keys(S.gymlog).filter(k=>/^[A-E]_\d+$/.test(k)&&(S.gymlog[k].w||S.gymlog[k].r));
+    if(oldKeys.length){
+      html+=`<div class="section-h">📦 Datos del programa anterior (A-E)</div>`;
+      oldKeys.forEach(k=>{const d=S.gymlog[k];
+        html+=`<div class="flat" style="margin-bottom:6px;font-size:.82rem"><span style="color:var(--text2)">${k}:</span> <b>${d.w||0}kg × ${d.r||0} reps</b></div>`;
+      });
+    }
+    el.innerHTML=html; return;
+  }
+
   // Regular treino view
   const t=TREINOS[gymOpen];
   html+=`<div class="card card-accent"><div style="font-weight:800;font-size:1.1rem">${t.name}</div>
     <div style="color:${t.color};font-weight:700;font-size:.9rem;margin-top:2px">${t.focus}</div></div>`;
 
+  const phase=getCurrentPhase();
+  html+=`<div class="flat" style="margin-bottom:12px;font-size:.82rem"><b style="color:${phase.color}">${phase.name}</b> <span style="color:var(--text2)">— ${phase.desc.split('.')[0]}.</span>
+    ${!S.cycleStart?` <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="S.cycleStart=todayISO();save();renderGym()">Empezar ciclo hoy</button>`:` <span style="color:var(--text3);font-size:.74rem">(desde ${S.cycleStart})</span>`}</div>`;
+
   t.ex.forEach((e,i)=>{
+    const hist=getExHistory(e.n);
+    const lastEntry=hist.length?hist[hist.length-1]:null;
+    const advice=e.log?getPhaseAdvice(e):{};
     html+=`<div class="card" style="padding:13px">
       <div class="ex" style="border:none;padding:0">
         <div class="top"><div style="flex:1">
@@ -993,6 +1066,14 @@ function renderGym(){
           </div>
         </div></div>`;
     if(e.log){
+      if(lastEntry){
+        html+=`<div style="margin-top:8px;padding:7px 10px;background:var(--bg2);border-radius:8px;font-size:.8rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="color:var(--lime);font-weight:700">Último: ${lastEntry.w}kg × ${lastEntry.r}</span>
+          <span style="color:var(--text3);font-size:.72rem">(${lastEntry.date}${lastEntry.src?' · migrado':''})</span>
+          ${hist.length>1?`<span class="timerbtn" style="margin-left:auto;font-size:.68rem" onclick="showExHistory('${e.n.replace(/'/g,"\\\\'")}')">${hist.length} reg.</span>`:''}
+        </div>`;
+      }
+      if(advice.text) html+=`<div style="margin-top:5px;font-size:.76rem;color:${advice.color}">${advice.icon} ${advice.text}</div>`;
       html+=`<div class="loginp"><span>Carga</span><input type="number" inputmode="decimal" placeholder="kg" value="${gv(gymOpen,i,'w')}" onchange="setGym('${gymOpen}',${i},'w',this.value)">
         <span>×</span><input type="number" inputmode="numeric" placeholder="reps" value="${gv(gymOpen,i,'r')}" onchange="setGym('${gymOpen}',${i},'r',this.value)">
         <span>última serie</span></div>`;
@@ -1011,8 +1092,49 @@ function renderGym(){
   html+=`<div id="restTimer" style="position:fixed;bottom:74px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--lime);color:var(--lime);padding:10px 18px;border-radius:30px;font-weight:800;display:none;z-index:90"></div>`;
   el.innerHTML=html;
 }
-function gv(t,i,f){ const k=t+'_'+i; return (S.gymlog[k]&&S.gymlog[k][f]!=null)?S.gymlog[k][f]:''; }
-function setGym(t,i,f,v){ const k=t+'_'+i; if(!S.gymlog[k])S.gymlog[k]={}; S.gymlog[k][f]=v; save(); }
+function gv(t,i,f){
+  const k=t+'_'+i;
+  if(S.gymlog[k]&&S.gymlog[k][f]!=null) return S.gymlog[k][f];
+  if(TREINOS[t]&&TREINOS[t].ex[i]){
+    const log=S.weightlog[TREINOS[t].ex[i].n];
+    if(log&&log.length){ const last=log[log.length-1]; return f==='w'?last.w:f==='r'?last.r:''; }
+  }
+  return '';
+}
+function setGym(t,i,f,v){
+  const k=t+'_'+i; if(!S.gymlog[k])S.gymlog[k]={}; S.gymlog[k][f]=v;
+  if(TREINOS[t]&&TREINOS[t].ex[i]){
+    const name=TREINOS[t].ex[i].n;
+    if(!S.weightlog[name]) S.weightlog[name]=[];
+    const today=todayISO();
+    let entry=S.weightlog[name].find(e=>e.date===today&&!e.src);
+    if(!entry){ entry={date:today,w:0,r:0}; S.weightlog[name].push(entry); }
+    if(f==='w') entry.w=parseFloat(v)||0;
+    if(f==='r') entry.r=parseInt(v)||0;
+  }
+  save();
+}
+function getExHistory(name){ return (S.weightlog[name]||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)); }
+function getCurrentPhase(){
+  if(!S.cycleStart) return PHASES[0];
+  const weeks=Math.floor((new Date(todayISO()+'T00:00:00')-new Date(S.cycleStart+'T00:00:00'))/604800000)+1;
+  if(weeks<=2) return PHASES[0];
+  if(weeks<=4) return PHASES[1];
+  if(weeks<=6) return PHASES[2];
+  return PHASES[3];
+}
+function getPhaseAdvice(exObj){
+  const ph=getCurrentPhase(), isC=exObj.tech==='Compuesto';
+  if(ph.name==='Adaptación') return {text:'Mantené este peso. Foco en técnica.',icon:'📘',color:'var(--blue)'};
+  if(ph.name==='Construcción') return {text:isC?'+2.5-5kg vs semana anterior':'Drop set en última serie',icon:'📗',color:'var(--green)'};
+  if(ph.name==='Intensificación') return {text:isC?'Rest-pause: falla→15s→falla':'Superset con otro accesorio',icon:'📙',color:'var(--orange)'};
+  return {text:'Mismo peso, mitad de series (deload)',icon:'📓',color:'var(--text2)'};
+}
+function showExHistory(name){
+  const h=getExHistory(name); if(!h.length){toast('Sin registros');return;}
+  let m=name+':\n'; h.forEach(e=>m+=e.date+': '+e.w+'kg × '+e.r+(e.src?' (migrado)':'')+'\n');
+  alert(m);
+}
 
 /* rest timer */
 let restInt=null;
