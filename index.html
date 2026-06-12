@@ -719,6 +719,26 @@ function renderHoy(){
   });
   html += `<div style="text-align:right;margin-top:8px"><span class="timerbtn" onclick="go('comida')">Ver detalle + recetas →</span></div></div>`;
 
+  // FOTO DEL DÍA
+  const todayPhoto = S.photos ? S.photos.find(p=>p.date===todayISO()) : null;
+  html += `<div class="section-h">📸 Foto del día</div><div class="card" style="text-align:center">`;
+  if(todayPhoto){
+    html += `<img src="${todayPhoto.data}" style="width:120px;height:160px;object-fit:cover;border-radius:10px;border:2px solid var(--lime);margin-bottom:8px">
+      <div style="font-size:.78rem;color:var(--lime);font-weight:700">✓ Foto de hoy tomada</div>`;
+  } else {
+    html += `<div style="font-size:2.2rem;margin-bottom:6px">🪞</div>
+      <div style="font-size:.85rem;font-weight:600;margin-bottom:4px">Sacate una foto de espejo</div>
+      <div class="muted" style="font-size:.78rem;margin-bottom:10px">Registrá tu progreso físico día a día</div>`;
+  }
+  html += `<label class="btn ${todayPhoto?'btn-ghost':'btn-lime'} btn-block" style="cursor:pointer;margin-top:8px">
+      ${todayPhoto?'📷 Reemplazar foto':'📷 Subir foto de hoy'}
+      <input type="file" accept="image/*" capture="environment" style="display:none" onchange="savePhotoFromHoy(this)">
+    </label>`;
+  if(S.photos&&S.photos.length>=2){
+    html += `<button class="btn btn-ghost btn-block" style="margin-top:6px" onclick="showPhotoCarousel()">🖼 Ver carrusel de progreso (${S.photos.length} fotos)</button>`;
+  }
+  html += `</div>`;
+
   el.innerHTML=html;
 }
 
@@ -1600,6 +1620,30 @@ function setLevel(lv){
 /* =================================================================
    PHOTOS
    ================================================================= */
+function savePhotoFromHoy(input){
+  if(!input.files||!input.files[0]) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const img=new Image();
+    img.onload=function(){
+      const canvas=document.createElement('canvas');
+      const max=400;
+      let w=img.width, h=img.height;
+      if(w>h){if(w>max){h*=max/w;w=max;}}else{if(h>max){w*=max/h;h=max;}}
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const data=canvas.toDataURL('image/jpeg',0.6);
+      if(!S.photos) S.photos=[];
+      // Replace today's photo if exists
+      const existing=S.photos.findIndex(p=>p.date===todayISO());
+      if(existing>=0) S.photos[existing]={date:todayISO(),data,ts:Date.now()};
+      else S.photos.push({date:todayISO(),data,ts:Date.now()});
+      save(); toast('📸 Foto guardada'); renderHoy();
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
 function savePhoto(input){
   if(!input.files||!input.files[0]) return;
   const reader=new FileReader();
@@ -1614,7 +1658,10 @@ function savePhoto(input){
       canvas.getContext('2d').drawImage(img,0,0,w,h);
       const data=canvas.toDataURL('image/jpeg',0.6);
       if(!S.photos) S.photos=[];
-      S.photos.push({date:todayISO(),data});
+      // Replace today's photo if exists
+      const existingIdx=S.photos.findIndex(p=>p.date===todayISO());
+      if(existingIdx>=0) S.photos[existingIdx]={date:todayISO(),data,ts:Date.now()};
+      else S.photos.push({date:todayISO(),data,ts:Date.now()});
       save(); toast('📸 Foto guardada'); renderMedidas();
     };
     img.src=e.target.result;
@@ -1645,6 +1692,17 @@ function showPhotoCarousel(){
     nextBtn.onclick=()=>{if(idx<S.photos.length-1){idx++;render();}};
   }
   render();
+  // Swipe support for mobile
+  let touchStartX=0, touchEndX=0;
+  div.addEventListener('touchstart',e=>{touchStartX=e.changedTouches[0].screenX;},{passive:true});
+  div.addEventListener('touchend',e=>{
+    touchEndX=e.changedTouches[0].screenX;
+    const diff=touchStartX-touchEndX;
+    if(Math.abs(diff)>50){
+      if(diff>0 && idx<S.photos.length-1){idx++;render();}
+      else if(diff<0 && idx>0){idx--;render();}
+    }
+  },{passive:true});
   document.body.appendChild(div);
 }
 
