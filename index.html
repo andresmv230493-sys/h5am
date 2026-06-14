@@ -475,25 +475,6 @@ const CARB_EXTRA={
   cardio:{extra:'+122g carbos', cal:'+~488 kcal', total:'~2,200', sugg:'+1 taza arroz · +1 banana · +1 fruta'},
   rest:{extra:'+97g carbos', cal:'+~388 kcal', total:'~2,100', sugg:'+½ taza arroz · +1 banana'},
 };
-const RECETAS = [
-  {n:'Tapioca de Pollo', cal:510, p:42, c:73, g:7, tag:'pos', ing:['100g goma de tapioca','100g pollo deshilachado (sazonado)','30g mozzarella light'], prep:'Distribuí la goma de tapioca uniforme en sartén antiadherente (fuego bajo). A los ~2 min voltea y deja firme. Rellena con pollo y queso. Opcional: lechuga y tomate.'},
-  {n:'Crepe de Pollo en sartén', cal:472, p:45, c:42, g:12.5, tag:'pos', ing:['1 huevo','60g harina de goma de tapioca','60ml leche descremada','sal','1/2 tapa de polvo de hornear','100g pollo grillado en cubos','50g requesón light'], prep:'Mezcla huevo, tapioca, leche, sal y polvo hasta homogéneo. Calienta sartén, vierte la masa, tras 1 min agrega pollo y requesón en media luna. Dora ambos lados.'},
-  {n:'Pan de Queso Fit (sartén)', cal:340, p:25, c:20, g:20, tag:'cafe', ing:['40g goma de tapioca','30g mozzarella','1 huevo','sal a gusto'], prep:'Mezcla todo y lleva a sartén precalentada y untada (spray de aceite). Cocina hasta firme y dorado. Corta en cuadros y opcional air fryer 180° ~90s.'},
-  {n:'Smoothie de Frutos Rojos', cal:392, p:32.5, c:64, g:3, tag:'pos', ing:['30g banana congelada','50g mango congelado','60g fresas congeladas','30g blueberries','90g yogur griego descremado','30g whey sabor leche'], prep:'Licúa todo hasta homogéneo, pasa a bowl y agrega toppings (fresa, mora, banana).'},
-  {n:'Pizza de Rap 10', cal:370, p:51, c:15, g:22, tag:'janta', ing:['1 rap 10','passata (salsa de tomate)','75g pollo deshilachado','25g mozzarella','tomate en rodajas'], prep:'En air fryer: passata, pollo, mozzarella sobre el rap 10. 8 min a 180°. Finaliza con tomate fresco.'},
-  {n:'Fideos de Arroz con Albóndigas', cal:623, p:45, c:90, g:9, tag:'pos', ing:['200g fideos de arroz cocidos','150g carne molida magra','100g passata','150g brotes de frijol','cebollín','condimento'], prep:'Modela albóndigas y congela un poco. Cocina los fideos. Aparte salsa de passata con condimentos, agrega albóndigas y agua; al final los brotes.'},
-  {n:'Helado de Fresa Fit', cal:147, p:16, c:22, g:0, tag:'sobremesa', ing:['200g fresa congelada','20g whey sabor crema'], prep:'Licúa whey + fresas + un poco de agua hasta consistencia de helado (dobla su tamaño). Sirve con fresas de topping.'},
-  {n:'Mousse de Maracuyá Fit', cal:268, p:34, c:29, g:2.5, tag:'sobremesa', ing:['50g pulpa de maracuyá','250g yogur natural descremado','30g whey sabor mousse de maracuyá','edulcorante (opcional)'], prep:'Mezcla yogur, whey y edulcorante hasta homogéneo. Finaliza con pulpa por encima. Yogur y pulpa deben estar previamente fríos (de un día para otro).'},
-  {n:'Barrita de Proteína', cal:140, p:10, c:20, g:8, tag:'lanche', ing:['200g whey','100g harina de avena','50g harina de almendras','30g chocolate con leche troceado','20g aceite de coco','10g miel','1 cda polvo de hornear','1 pizca de sal'], prep:'Mezcla secos, agrega aceite de coco y miel, integra el chocolate. Pon en molde rectangular y presiona. Horno 180° por 15-20 min. Enfría y corta en barras.'},
-  {n:'Pan con Banana', cal:228, p:12, c:41, g:2.5, tag:'pre', ing:['1 rebanada de pan de molde','20g dulce de leche','20ml leche descremada','10g whey sabor leche','60g banana','canela a gusto'], prep:'Mezcla dulce de leche con leche y whey, esparce en el pan, coloca banana en rodajas, air fryer 5 min, espolvorea canela. Pre-entreno rico y rápido.'},
-  {n:'Bolo de Taza (mug cake)', cal:280, p:40, c:30, g:5, tag:'lanche', ing:['40g harina de avena','5g polvo de hornear','60ml leche descremada','20g cacao en polvo','5g edulcorante','25g whey sabor vainilla'], prep:'Mezcla avena, polvo y cacao. Agrega leche, edulcorante y whey. En una taza, microondas 1 min. Reposa unos segundos y disfruta.'},
-  {n:'Panqueca de Carne Molida', cal:370, p:37, c:20, g:24, tag:'janta', ing:['50g goma de tapioca','1 huevo','75g carne molida'], prep:'Mezcla tapioca + huevo + pizca de sal. En sartén antiadherente cocina la masa firme sin dorar. Rellena con carne molida y enrolla. Opcional: passata o ketchup zero.'},
-  {n:'Escondidinho de Pollo Fit', cal:507, p:56, c:38, g:13, tag:'janta', ing:['800g papas pisadas','600g pechuga de pollo deshilachada sazonada','120g mozzarella','200ml leche descremada','(rinde 4 porciones)'], prep:'Puré con la leche, sal y pimienta. En refractario: pollo abajo, puré encima, queso arriba. Air fryer 180° 12 min hasta dorar costra. Rinde 4.'},
-  {n:'Hamburguesa Casera', cal:369, p:37, c:27, g:11, tag:'janta', ing:['130g carne molida magra','1 pan de hamburguesa (hasta 50g)','1 lonja mozzarella (20g)','tomate y lechuga','salsas ZERO (opcional)'], prep:'Sazona la carne, forma con una tapa redonda, sella en sartén untada. Funde el queso encima (fuego apagado). Arma con tomate, lechuga y salsas zero.'},
-  {n:'Coxinha de Pollo Fit', cal:440, p:53, c:45, g:14, tag:'lanche', ing:['200g papas pisadas','130g pechuga de pollo deshilachada sazonada','cebollín a gusto','10g requesón light'], prep:'Mezcla papas, pollo y cebollín; modela coxinhas usando el requesón de relleno. Air fryer 180° por 15 min.'},
-  {n:'Avena Proteica (Mingau)', cal:492, p:50, c:55, g:8, tag:'cafe', ing:['40g avena','200ml agua','100g fresa','50g manzana picada','30g whey','canela y edulcorante a gusto'], prep:'Avena + agua al microondas 1 min (revolviendo cada 30s hasta consistencia). Agrega whey, edulcorante y canela. Corona con la fruta.'},
-  {n:'Esfiha cerrada de Rap 10', cal:344, p:27, c:31, g:13, tag:'lanche', ing:['1 rap 10','50g pechuga de pollo deshilachada','10g requesón light','30g mozzarella','1 yema + ajonjolí (opcional)'], prep:'Pollo y mozzarella al centro, requesón en los bordes para sellar en forma de esfiha. Pincela con yema y ajonjolí. Air fryer 12 min a 160°.'},
-];
 /* ---------- FASES DE PROGRESIÓN (ciclo 7 semanas) ---------- */
 const PHASES = [
   {w:'1-2', name:'Adaptación', color:'var(--blue)', desc:'Volumen base como está listado. RPE 7-8. Aprender movimientos y establecer cargas de referencia.', mods:'Sin drop sets ni rest-pause. Foco 100% en técnica y rango completo de movimiento.'},
@@ -511,12 +492,6 @@ const NUTRI = {
   dias: {1:'gym',2:'cardio',3:'gym',4:'gym',5:'gym',6:'cardio',7:'rest'},
 };
 
-const HACKS = [
-  {t:'Comodín en la mochila', d:'Whey, nueces, barrita de proteína o mix de nuts. Evita pasar horas sin comer y luego devorar.'},
-  {t:'Compra inteligente (sin cocinar)', d:'Huevos cocidos listos · pan de trigo + yogur + banana · whey en botella. Antes que fast food, arma el kit híbrido en el súper.'},
-  {t:'Comida de emergencia en la calle', d:'Restaurante por kilo: arroz, frijol, huevo, pollo y ensalada · Panadería: omelet con queso + fruta · Delivery: poke o grill con arroz + proteína + vegetal.'},
-  {t:'Congela comidas simples', d:'1 día/semana prepara 3-4 marmitas: arroz+carne+vegetal · pollo desmenuzado con batata · frijol + huevos cocidos. 1 min de microondas y listo.'},
-];
 
 /* =================================================================
    STATE / STORAGE
@@ -604,13 +579,22 @@ function computeStreak(){
   if(!S.monthlyWorkouts) S.monthlyWorkouts={};
   return (S.monthlyWorkouts[ym]||[]).length;
 }
+function updateStreakDisplay(){
+  const count=computeStreak();
+  const el=document.getElementById('streakN');
+  if(el) el.textContent=count;
+  return count;
+}
 function logWorkoutDay(){
   const now=new Date(), ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   if(!S.monthlyWorkouts) S.monthlyWorkouts={};
   if(!S.monthlyWorkouts[ym]) S.monthlyWorkouts[ym]=[];
   const today=todayISO();
-  if(!S.monthlyWorkouts[ym].includes(today)) S.monthlyWorkouts[ym].push(today);
-  save();
+  if(!S.monthlyWorkouts[ym].includes(today)){
+    S.monthlyWorkouts[ym].push(today);
+    save();
+  }
+  updateStreakDisplay();
 }
 
 function updateHeaderInfo(){
@@ -659,7 +643,7 @@ function toggleExCheck(treino,idx){
   // If ALL exercises in this session are now checked, log workout day for streak
   const t=TREINOS[treino];
   const allChecked=t.ex.every((_,i)=>S.exerciseChecks[date][treino+'_'+i]);
-  if(allChecked){ logWorkoutDay(); S.streak=computeStreak(); document.getElementById('streakN').textContent=S.streak; toast('🔥 ¡'+t.name+' completado!'); }
+  if(allChecked){ logWorkoutDay(); toast('🔥 ¡'+t.name+' completado!'); }
   save(); renderGym();
 }
 
@@ -1037,18 +1021,6 @@ function renderSemana(){
     html += `</div>`;
   });
 
-  // hábitos
-  html += `<div class="section-h">Hábitos de la semana</div><div class="card pad0" style="overflow-x:auto">
-    <table class="mtable" style="min-width:420px"><thead><tr><th>Día</th><th>☀️</th><th>⚡</th><th>💪</th><th>🌙</th><th>💧</th><th>Ritual</th></tr></thead><tbody>`;
-  for(let d=1; d<=7; d++){
-    const iso = isoForDay(d);
-    const h = iso?S.habits[iso]:null;
-    const cell=(v)=> v?'<span style="color:var(--lime)">✓</span>':'<span style="color:var(--text3)">·</span>';
-    const rit = h?((h.am?.length||0)+(h.pm?.length||0)):0;
-    html += `<tr><td>Día ${d}${cd===d?' •':''}</td><td>${h?cell(h.cafe):'·'}</td><td>${h?cell(h.pre):'·'}</td><td>${h?cell(h.pos):'·'}</td><td>${h?cell(h.janta):'·'}</td><td>${h?h.water+'v':'·'}</td><td>${rit}/11</td></tr>`;
-  }
-  html += `</tbody></table></div>`;
-
   if(cd&&cd>=1){
     html += `<button class="btn btn-ghost btn-block" style="margin-top:6px" onclick="newWeek()">🔄 Reiniciar semana</button>`;
   }
@@ -1268,7 +1240,6 @@ function startRest(restStr){
 /* =================================================================
    RENDER: COMIDA
    ================================================================= */
-let recipeFilter='all';
 function renderComida(){
   const el=document.getElementById('v-comida');
   const iso=todayISO();
@@ -1309,34 +1280,8 @@ function renderComida(){
     </div>`;
   });
 
-  // Keep recipes
-  html+=`<div class="section-h">Recetario (${RECETAS.length} recetas)</div>`;
-  const filters=[['all','Todas'],['cafe','☀️ Café'],['pre','⚡ Pre'],['pos','💪 Post'],['janta','🌙 Cena'],['lanche','🥜 Snack'],['sobremesa','🍨 Postre']];
-  html+=`<div class="row" style="gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px">`;
-  filters.forEach(f=> html+=`<button class="btn btn-ghost btn-sm" style="white-space:nowrap" onclick="this.parentElement.querySelectorAll('.btn').forEach(b=>b.classList.remove('btn-lime'));this.classList.add('btn-lime');document.querySelectorAll('.rec-card').forEach(c=>c.style.display=('${f[0]}'==='all'||c.dataset.tag==='${f[0]}')?'block':'none')">${f[1]}</button>`);
-  html+=`</div>`;
-  RECETAS.forEach((r,idx)=>{
-    html+=`<div class="recipe rec-card" data-tag="${r.tag}" id="rec${idx}">
-      <div class="rh" onclick="document.getElementById('rec${idx}').classList.toggle('open')">
-        <div><div class="rn">${r.n}</div><div class="muted" style="font-size:.74rem">${slotName(r.tag)}</div></div>
-        <div style="text-align:right"><div class="rcal">${r.cal} kcal</div><div class="chev">▾</div></div>
-      </div>
-      <div class="rbody">
-        <div class="macros"><div class="macro"><b>${r.p}g</b><span>Proteína</span></div><div class="macro"><b>${r.c}g</b><span>Carbo</span></div><div class="macro"><b>${r.g}g</b><span>Grasa</span></div></div>
-        <div style="font-weight:700;font-size:.78rem;color:var(--text2)">INGREDIENTES</div>
-        <ul>${r.ing.map(i=>'<li>'+i+'</li>').join('')}</ul>
-        <div class="prep"><b style="color:var(--text)">Preparación:</b> ${r.prep}</div>
-      </div></div>`;
-  });
-
-  // Hacks
-  html+=`<div class="section-h">Hacks para la vida ocupada</div>`;
-  HACKS.forEach(h=> html+=`<div class="flat" style="margin-bottom:8px"><b style="font-size:.88rem">${h.t}</b><div class="muted" style="font-size:.82rem;margin-top:3px">${h.d}</div></div>`);
-
   el.innerHTML=html;
 }
-function slotName(tag){ const map={cafe:'☀️ Desayuno',pre:'⚡ Pre-entreno',pos:'💪 Post-entreno',janta:'🌙 Cena',lanche:'🥜 Snack',sobremesa:'🍨 Postre'}; return map[tag]||''; }
-
 /* =================================================================
    RENDER: MEDIDAS
    ================================================================= */
@@ -1561,7 +1506,7 @@ function newWeek(){
 function completeSession(id){
   const st=S.sessions[id]; st.done=!st.done; save();
   if(st.done) logWorkoutDay();
-  S.streak=computeStreak();
+  updateStreakDisplay();
   if(st.done) toast('✓ Sesión completada');
   renderAll();
 }
@@ -1571,12 +1516,12 @@ function moveSession(id,dir){
   if(dir===1 && st.day>=7){ toast('Ya está en el último día'); return; }
   st.day+=dir; save(); toast((dir===1?'→':'←')+' Movida al Día '+st.day); renderAll();
 }
-function toggleMeal(k){ const h=habit(todayISO()); h[k]=!h[k]; save(); S.streak=computeStreak(); renderHoy(); document.getElementById('streakN').textContent=S.streak; }
-function setWater(n){ const h=habit(todayISO()); h.water = (h.water===n)?n-1:n; save(); S.streak=computeStreak(); renderHoy(); document.getElementById('streakN').textContent=S.streak; }
+function toggleMeal(k){ const h=habit(todayISO()); h[k]=!h[k]; save(); renderHoy(); }
+function setWater(n){ const h=habit(todayISO()); h.water = (h.water===n)?n-1:n; save(); renderHoy(); }
 function toggleRitual(period,i){
   const h=habit(todayISO()); const arr=h[period];
   const idx=arr.indexOf(i); if(idx>=0)arr.splice(idx,1); else arr.push(i);
-  save(); S.streak=computeStreak(); renderHoy(); document.getElementById('streakN').textContent=S.streak;
+  save(); renderHoy();
 }
 function toggleMealNew(k){
   const iso=todayISO();
@@ -1778,7 +1723,7 @@ function go(v){
 document.querySelectorAll('nav button').forEach(b=> b.onclick=()=>go(b.dataset.v));
 
 function renderAll(){
-  S.streak=computeStreak(); document.getElementById('streakN').textContent=S.streak;
+  updateStreakDisplay();
   document.getElementById('levelN').textContent=S.level||1;
   updateHeaderInfo();
   const active=document.querySelector('nav button.active').dataset.v;
@@ -1786,7 +1731,7 @@ function renderAll(){
 }
 
 /* INIT */
-S.streak=computeStreak(); document.getElementById('streakN').textContent=S.streak;
+updateStreakDisplay();
 document.getElementById('levelN').textContent=S.level||1;
 updateHeaderInfo();
 renderHoy();
