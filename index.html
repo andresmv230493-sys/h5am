@@ -101,6 +101,12 @@ h2.title{font-size:1.35rem; font-weight:800; margin-bottom:3px;}
   display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:all .15s; font-size:.9rem; color:#0b1220;}
 .chk.on{background:var(--lime); border-color:var(--lime);}
 .chk.on::after{content:'✓'; font-weight:900;}
+.ex-done{background:rgba(78,217,138,.06) !important;border-color:rgba(78,217,138,.3) !important;}
+.cal-day{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px;border-radius:9px;background:var(--bg2);border:1px solid var(--border);cursor:pointer;flex:1;min-width:0;transition:all .15s;}
+.cal-day.sel{border-color:var(--lime);background:rgba(194,249,79,.1);}
+.cal-day .cd-nm{font-size:.6rem;color:var(--text2);font-weight:700;}
+.cal-day .cd-d{font-size:.85rem;font-weight:800;}
+.cal-day .cd-cal{font-size:.58rem;color:var(--lime);font-weight:700;}
 /* progress */
 .bar{height:9px; background:var(--bg2); border-radius:10px; overflow:hidden; border:1px solid var(--border);}
 .bar > i{display:block; height:100%; background:linear-gradient(90deg,var(--lime-d),var(--lime)); border-radius:10px; transition:width .5s;}
@@ -532,12 +538,14 @@ function load(){
   s.monthlyWorkouts = s.monthlyWorkouts || {};
   s.calsBurned = s.calsBurned || {};
   s.photos = s.photos || [];
+  s.exerciseChecks = s.exerciseChecks || {};
   // init sessions
   SESSIONS.forEach(se=>{ if(!s.sessions[se.id]) s.sessions[se.id]={done:false, day:se.dayDef}; });
   return s;
 }
 let S = load();
 updateLevel();
+let _calDate = todayISO();
 (function migrateOldWeights(){
   if(S._wMigrated) return;
   const oldT={
@@ -625,6 +633,36 @@ function updateHeaderInfo(){
     <span style="background:var(--surface2);padding:3px 9px;border-radius:12px;border:1px solid var(--border)">Hoy: ${dayNames[dow]} → Meta ${calTarget} kcal</span>`;
 }
 
+/* ---------- Calorie date selector helpers ---------- */
+function getWeekDays(){
+  const today=new Date();
+  const dow=today.getDay()||7;
+  const monday=new Date(today);
+  monday.setDate(today.getDate()-(dow-1));
+  const days=[],names=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  for(let i=0;i<7;i++){
+    const d=new Date(monday); d.setDate(monday.getDate()+i);
+    const iso=d.toISOString().slice(0,10);
+    days.push({name:names[i],date:d.getDate(),iso,isToday:iso===todayISO()});
+  }
+  return days;
+}
+function selectCalDate(iso){ _calDate=iso; renderHoy(); }
+
+/* ---------- Exercise checkbox helpers ---------- */
+function getExChecks(date){ return S.exerciseChecks[date]||{}; }
+function toggleExCheck(treino,idx){
+  const date=todayISO();
+  if(!S.exerciseChecks[date]) S.exerciseChecks[date]={};
+  const key=treino+'_'+idx;
+  S.exerciseChecks[date][key]=!S.exerciseChecks[date][key];
+  // If ALL exercises in this session are now checked, log workout day for streak
+  const t=TREINOS[treino];
+  const allChecked=t.ex.every((_,i)=>S.exerciseChecks[date][treino+'_'+i]);
+  if(allChecked){ logWorkoutDay(); S.streak=computeStreak(); document.getElementById('streakN').textContent=S.streak; toast('🔥 ¡'+t.name+' completado!'); }
+  save(); renderGym();
+}
+
 /* =================================================================
    RENDER: HOY
    ================================================================= */
@@ -695,13 +733,26 @@ function renderHoy(){
       <button class="btn btn-lime btn-block" style="margin-top:11px" onclick="go('medidas')">Ir a Medidas →</button></div>`;
   }
 
-  // CALORÍAS QUEMADAS
+  // CALORÍAS QUEMADAS con selector de fecha
+  const weekDays=getWeekDays();
   html += `<div class="section-h">🔥 Calorías quemadas (smartwatch)</div>
-    <div class="card"><div class="row" style="gap:10px">
+    <div class="card">
+      <div style="display:flex;gap:4px;margin-bottom:10px">`;
+  weekDays.forEach(wd=>{
+    const sel=wd.iso===_calDate;
+    const cal=S.calsBurned[wd.iso]||0;
+    html+=`<div class="cal-day${sel?' sel':''}" onclick="selectCalDate('${wd.iso}')">
+      <span class="cd-nm" style="${wd.isToday?'color:var(--lime)':''}">${wd.name}</span>
+      <span class="cd-d">${wd.date}</span>
+      ${cal?`<span class="cd-cal">${cal}</span>`:''}
+    </div>`;
+  });
+  html+=`</div>
+    <div class="row" style="gap:10px">
       <span style="font-size:1.3rem">🔥</span>
-      <input type="number" inputmode="numeric" placeholder="kcal" value="${S.calsBurned[iso]||''}"
-        onchange="S.calsBurned[todayISO()]=parseInt(this.value)||0;save()" style="flex:1">
-      <span class="muted" style="font-size:.78rem">kcal hoy</span>
+      <input type="number" inputmode="numeric" placeholder="kcal" value="${S.calsBurned[_calDate]||''}"
+        onchange="S.calsBurned['${_calDate}']=parseInt(this.value)||0;save();renderHoy()" style="flex:1">
+      <span class="muted" style="font-size:.78rem">kcal ${_calDate===todayISO()?'hoy':_calDate.slice(5)}</span>
     </div></div>`;
 
   // COMIDAS (simplified in Hoy view)
@@ -1100,8 +1151,12 @@ function renderGym(){
 
   // Regular treino view
   const t=TREINOS[gymOpen];
+  const exChecksToday=getExChecks(todayISO());
+  const checkedCount=t.ex.filter((_,i)=>exChecksToday[gymOpen+'_'+i]).length;
   html+=`<div class="card card-accent"><div style="font-weight:800;font-size:1.1rem">${t.name}</div>
-    <div style="color:${t.color};font-weight:700;font-size:.9rem;margin-top:2px">${t.focus}</div></div>`;
+    <div style="color:${t.color};font-weight:700;font-size:.9rem;margin-top:2px">${t.focus}</div>
+    ${checkedCount>0?`<div style="margin-top:6px"><div class="bar" style="height:6px"><i style="width:${Math.round(checkedCount/t.ex.length*100)}%"></i></div>
+    <div style="font-size:.72rem;color:var(--text2);margin-top:4px">${checkedCount}/${t.ex.length} ejercicios hechos${checkedCount===t.ex.length?' · 🔥 ¡Completa!':''}</div></div>`:''}</div>`;
 
   const phase=getCurrentPhase();
   html+=`<div class="flat" style="margin-bottom:12px;font-size:.82rem"><b style="color:${phase.color}">${phase.name}</b> <span style="color:var(--text2)">— ${phase.desc.split('.')[0]}.</span>
@@ -1111,10 +1166,13 @@ function renderGym(){
     const hist=getExHistory(e.n);
     const lastEntry=hist.length?hist[hist.length-1]:null;
     const advice=e.log?getPhaseAdvice(e):{};
-    html+=`<div class="card" style="padding:13px">
+    const exDone=!!exChecksToday[gymOpen+'_'+i];
+    html+=`<div class="card${exDone?' ex-done':''}" style="padding:13px">
       <div class="ex" style="border:none;padding:0">
-        <div class="top"><div style="flex:1">
-          <div class="name">${i+1}. ${e.n}</div>
+        <div class="top">
+          <div class="chk ${exDone?'on':''}" onclick="toggleExCheck('${gymOpen}',${i})" style="margin-top:2px"></div>
+          <div style="flex:1">
+          <div class="name" style="${exDone?'text-decoration:line-through;opacity:.65':''}">${i+1}. ${e.n}</div>
           <div class="meta">${e.s}</div>
           <div class="tags"><span class="tag tech">${e.tech}</span><span class="tag rest">⏱ ${e.rest}</span>
             ${e.rest!=='—'?`<span class="timerbtn" onclick="startRest('${e.rest}')">▶ timer</span>`:''}
