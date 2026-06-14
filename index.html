@@ -228,7 +228,7 @@ details.awtip summary::-webkit-details-marker{display:none;}
           <span class="sub">Desafío Atleta Híbrido · Andres</span>
         </div>
       </div>
-      <div class="streak" id="streakBox" title="Entrenamientos completados este mes">🔥 <span class="n" id="streakN">0</span></div>
+      <div class="streak" id="streakBox" title="Entrenamientos completados este mes" onclick="editStreak()" style="cursor:pointer">🔥 <span class="n" id="streakN">0</span></div>
       <div class="streak" onclick="cycleLevel()" title="Nivel de corrida" style="cursor:pointer">🏃 Nv.<span class="n" id="levelN">1</span></div>
     </div>
     <div id="headerInfo" style="display:flex;gap:8px;margin-top:8px;font-size:.74rem;flex-wrap:wrap"></div>
@@ -714,7 +714,8 @@ function updateStreakDisplay(){
   if(el) el.textContent=count;
   return count;
 }
-function logWorkoutDay(){
+function editStreak(){  const cur=computeStreak();  const val=prompt("Workouts completados este mes:",cur);  if(val===null)return;  const n=parseInt(val);  if(isNaN(n)||n<0)return;  const now=new Date(),ym=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");  if(!S.monthlyWorkouts)S.monthlyWorkouts={};  if(!S.monthlyWorkouts[ym])S.monthlyWorkouts[ym]=[];  const arr=S.monthlyWorkouts[ym];  if(n>arr.length){    for(let i=arr.length;i<n;i++){      const d=new Date(now.getFullYear(),now.getMonth(),Math.max(1,now.getDate()-n+i+1));      const fakeISO=d.toISOString().slice(0,10);      if(!arr.includes(fakeISO))arr.push(fakeISO);    }  }else{    S.monthlyWorkouts[ym]=arr.slice(0,n);  }  save();updateStreakDisplay();
+setTimeout(scrollCalToday,300);}function logWorkoutDay(){
   const now=new Date(), ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   if(!S.monthlyWorkouts) S.monthlyWorkouts={};
   if(!S.monthlyWorkouts[ym]) S.monthlyWorkouts[ym]=[];
@@ -740,20 +741,25 @@ function updateHeaderInfo(){
 }
 
 /* ---------- Calorie date selector helpers ---------- */
-function getWeekDays(){
+function getMonthDays(){
   const today=new Date();
-  const dow=today.getDay()||7;
-  const monday=new Date(today);
-  monday.setDate(today.getDate()-(dow-1));
-  const days=[],names=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-  for(let i=0;i<7;i++){
-    const d=new Date(monday); d.setDate(monday.getDate()+i);
+  const y=today.getFullYear(), m=today.getMonth();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const names=["Dom","Lun","Mar","Mi\u00e9","Jue","Vie","S\u00e1b"];
+  const days=[];
+  for(let i=1;i<=daysInMonth;i++){
+    const d=new Date(y,m,i);
     const iso=d.toISOString().slice(0,10);
-    days.push({name:names[i],date:d.getDate(),iso,isToday:iso===todayISO()});
+    days.push({name:names[d.getDay()],date:i,iso,isToday:iso===todayISO()});
   }
   return days;
 }
-function selectCalDate(iso){ _calDate=iso; renderHoy(); }
+function scrollCalToday(){
+  const wrap=document.getElementById("calMonthScroll2");
+  if(!wrap)return;
+  const sel=wrap.querySelector(".cal-day.sel");
+  if(sel) sel.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"});
+}function selectCalDate(iso){ _calDate=iso; renderHoy();setTimeout(scrollCalToday,80); }
 
 /* ---------- Exercise checkbox helpers ---------- */
 function getExChecks(date){ return S.exerciseChecks[date]||{}; }
@@ -840,20 +846,20 @@ function renderHoy(){
   }
 
   // CALORÍAS QUEMADAS con selector de fecha
-  const weekDays=getWeekDays();
+  const monthDays=getMonthDays();
   html += `<div class="section-h">🔥 Calorías quemadas (smartwatch)</div>
     <div class="card">
-      <div style="display:flex;gap:4px;margin-bottom:10px">`;
-  weekDays.forEach(wd=>{
+      <div id="calMonthScroll2" style="display:flex;gap:5px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px;-webkit-overflow-scrolling:touch">`;
+  monthDays.forEach(wd=>{
     const sel=wd.iso===_calDate;
     const cal=S.calsBurned[wd.iso]||0;
-    html+=`<div class="cal-day${sel?' sel':''}" onclick="selectCalDate('${wd.iso}')">
-      <span class="cd-nm" style="${wd.isToday?'color:var(--lime)':''}">${wd.name}</span>
+    const isToday=wd.isToday;
+    html+=`<div class="cal-day${sel?' sel':''}" onclick="selectCalDate('${wd.iso}')" style="min-width:46px;flex-shrink:0;${isToday&&!sel?'border-color:var(--green);background:rgba(78,217,138,.1)':''}">
+      <span class="cd-nm" style="${isToday?'color:var(--green);font-weight:800':''}">${wd.name}</span>
       <span class="cd-d">${wd.date}</span>
-      ${cal?`<span class="cd-cal">${cal}</span>`:''}
+      ${cal?`<span class="cd-cal">${cal}</span>`:'<span style="height:12px"></span>'}
     </div>`;
-  });
-  html+=`</div>
+  });  html+=`</div>
     <div class="row" style="gap:10px">
       <span style="font-size:1.3rem">🔥</span>
       <input type="number" inputmode="numeric" placeholder="kcal" value="${S.calsBurned[_calDate]||''}"
