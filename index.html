@@ -513,6 +513,8 @@ function load(){
   s.monthlyWorkouts = s.monthlyWorkouts || {};
   s.calsBurned = s.calsBurned || {};
   s.photos = s.photos || [];
+  s.manualWeek = s.manualWeek || null;
+  s.monthlyReports = s.monthlyReports || {};
   s.exerciseChecks = s.exerciseChecks || {};
   // init sessions
   SESSIONS.forEach(se=>{ if(!s.sessions[se.id]) s.sessions[se.id]={done:false, day:se.dayDef}; });
@@ -521,6 +523,7 @@ function load(){
 let S = load();
 updateLevel();
 let _calDate = todayISO();
+let _reportMonth = null;
 (function migrateOldWeights(){
   if(S._wMigrated) return;
   const oldT={
@@ -547,6 +550,132 @@ let _calDate = todayISO();
   S._wMigrated=true; if(found>0){ localStorage.setItem(KEY,JSON.stringify(S)); }
 })();
 function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+
+/* ---------- WEEK / PHASE HELPERS ---------- */
+function getActiveWeek(){
+  if(S.manualWeek) return S.manualWeek;
+  if(!S.cycleStart) return 1;
+  let weeks=Math.floor((new Date(todayISO()+'T00:00:00')-new Date(S.cycleStart+'T00:00:00'))/604800000)+1;
+  if(weeks>7) weeks=((weeks-1)%7)+1;
+  return weeks;
+}
+function getPhaseForWeek(w){
+  if(w<=2) return {name:'Adaptación',color:'var(--green)',idx:0};
+  if(w<=4) return {name:'Construcción',color:'#e8c94a',idx:1};
+  if(w<=6) return {name:'Intensificación',color:'var(--orange)',idx:2};
+  return {name:'Deload',color:'var(--blue)',idx:3};
+}
+const MAIN_COMPOUNDS=['Press banca plano (barra)','Sentadilla (back squat)','Peso muerto convencional','Press militar OHP (barra)','Remo con barra'];
+function isMainCompound(name){ return MAIN_COMPOUNDS.includes(name); }
+function getAdaptedSets(ex){
+  const w=getActiveWeek(), ph=getPhaseForWeek(w);
+  const m=ex.s.match(/^(\d+)(\s*[×x]\s*)(.+)$/);
+  if(!m) return ex.s;
+  let sets=parseInt(m[1]); const sep=m[2]; const reps=m[3];
+  const compound=isMainCompound(ex.n);
+  if((ph.name==='Construcción'||ph.name==='Intensificación')&&compound) sets+=1;
+  if(ph.name==='Deload') sets=Math.max(1,Math.ceil(sets/2));
+  return sets+sep+reps;
+}
+function getPhaseNote(w){
+  const ph=getPhaseForWeek(w);
+  if(ph.name==='Adaptación') return 'Mantené el peso, enfocate en técnica';
+  if(ph.name==='Construcción') return '+2.5-5kg en compuestos, introducí drop sets en último set';
+  if(ph.name==='Intensificación') return 'Rest-pause en compuestos, supersets en accesorios, RPE 9-10';
+  return 'Semana de descarga: mitad de series, mantené el peso';
+}
+function getPhaseBannerColor(w){
+  const ph=getPhaseForWeek(w);
+  if(ph.name==='Adaptación') return {bg:'rgba(78,217,138,.12)',border:'rgba(78,217,138,.3)',text:'var(--green)'};
+  if(ph.name==='Construcción') return {bg:'rgba(232,201,74,.12)',border:'rgba(232,201,74,.3)',text:'#e8c94a'};
+  if(ph.name==='Intensificación') return {bg:'rgba(255,159,69,.12)',border:'rgba(255,159,69,.3)',text:'var(--orange)'};
+  return {bg:'rgba(91,141,239,.12)',border:'rgba(91,141,239,.3)',text:'var(--blue)'};
+}
+
+/* ---------- WEEK PICKER MODAL ---------- */
+function showWeekPicker(){
+  const w=getActiveWeek();
+  let h='<div style="position:fixed;inset:0;z-index:400;background:rgba(8,13,24,.92);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px" id="weekPickerOverlay" onclick="if(event.target===this)this.remove()">';
+  h+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px;max-width:340px;width:100%;max-height:85vh;overflow-y:auto">';
+  h+='<div style="font-weight:800;font-size:1.1rem;margin-bottom:4px">Seleccionar semana</div>';
+  h+='<div class="muted" style="margin-bottom:16px;font-size:.82rem">Elegí en qué semana del ciclo estás. La rutina se adapta automáticamente.</div>';
+  for(let i=1;i<=7;i++){
+    const ph=getPhaseForWeek(i);
+    const bc=getPhaseBannerColor(i);
+    const sel=i===w;
+    h+='<div onclick="setManualWeek('+i+')" style="padding:12px;margin-bottom:6px;border-radius:11px;cursor:pointer;border:2px solid '+(sel?'var(--lime)':bc.border)+';background:'+(sel?'rgba(194,249,79,.12)':bc.bg)+';display:flex;align-items:center;gap:10px">';
+    h+='<div style="width:32px;height:32px;border-radius:8px;background:'+(sel?'var(--lime)':bc.bg)+';border:2px solid '+(sel?'var(--lime)':bc.border)+';display:flex;align-items:center;justify-content:center;font-weight:800;color:'+(sel?'#0b1220':bc.text)+';font-size:.9rem">'+i+'</div>';
+    h+='<div style="flex:1"><div style="font-weight:700;font-size:.88rem;color:'+(sel?'var(--lime)':bc.text)+'">Semana '+i+' — '+ph.name+'</div>';
+    h+='<div style="font-size:.74rem;color:var(--text2)">'+getPhaseNote(i)+'</div></div>';
+    if(sel) h+='<span style="color:var(--lime);font-weight:800">✓</span>';
+    h+='</div>';
+  }
+  h+='<button class="btn btn-ghost btn-block" style="margin-top:10px" onclick="document.getElementById(\'weekPickerOverlay\').remove()">Cerrar</button>';
+  h+='</div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+}
+function setManualWeek(w){
+  S.manualWeek=w;
+  if(!S.cycleStart) S.cycleStart=todayISO();
+  save();
+  const overlay=document.getElementById('weekPickerOverlay');
+  if(overlay) overlay.remove();
+  toast('Semana '+w+' · '+getPhaseForWeek(w).name);
+  renderAll();
+}
+
+/* ---------- MONTHLY REPORTS ---------- */
+function generateMonthReport(ym){
+  if(!ym){ const now=new Date(); ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'); }
+  const workouts=(S.monthlyWorkouts&&S.monthlyWorkouts[ym])||[];
+  let totalCals=0, calDays=0;
+  Object.entries(S.calsBurned||{}).forEach(([date,cal])=>{
+    if(date.startsWith(ym)&&cal>0){ totalCals+=cal; calDays++; }
+  });
+  const monthMeasures=(S.measures||[]).filter(m=>m.date.startsWith(ym)).sort((a,b)=>a.date.localeCompare(b.date));
+  const lastMeasure=monthMeasures.length?monthMeasures[monthMeasures.length-1]:null;
+  const firstMeasure=monthMeasures.length?monthMeasures[0]:null;
+  const report={
+    ym, totalWorkouts:workouts.length, workoutDates:workouts.slice(),
+    totalCalsBurned:totalCals, avgCalsBurned:calDays?Math.round(totalCals/calDays):0, calDays,
+    firstMeasure:firstMeasure?{...firstMeasure.m}:null,
+    lastMeasure:lastMeasure?{...lastMeasure.m}:null,
+    generatedAt:new Date().toISOString()
+  };
+  if(!S.monthlyReports) S.monthlyReports={};
+  S.monthlyReports[ym]=report;
+  save();
+  return report;
+}
+function getMonthReport(ym){ return generateMonthReport(ym); }
+function getAvailableMonths(){
+  const months=new Set();
+  Object.keys(S.monthlyWorkouts||{}).forEach(ym=>months.add(ym));
+  Object.keys(S.calsBurned||{}).forEach(date=>months.add(date.slice(0,7)));
+  (S.measures||[]).forEach(m=>months.add(m.date.slice(0,7)));
+  Object.keys(S.monthlyReports||{}).forEach(ym=>months.add(ym));
+  const now=new Date(); months.add(now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'));
+  return Array.from(months).sort().reverse();
+}
+function getMonthName(ym){
+  const [y,m]=ym.split('-');
+  const names=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return names[parseInt(m)-1]+' '+y;
+}
+function getPreviousMonth(ym){
+  const [y,m]=ym.split('-').map(Number);
+  const pm=m===1?12:m-1, py=m===1?y-1:y;
+  return py+'-'+String(pm).padStart(2,'0');
+}
+function compArrow(cur,prev,reverse){
+  if(prev===0&&cur===0) return {arrow:'→',pct:'0%',cls:'neu'};
+  if(prev===0) return {arrow:'↑',pct:'N/A',cls:reverse?'bad':'good'};
+  const diff=cur-prev, pct=Math.round(Math.abs(diff)/prev*100);
+  if(diff===0) return {arrow:'→',pct:'0%',cls:'neu'};
+  const up=diff>0;
+  const good=reverse?!up:up;
+  return {arrow:up?'↑':'↓',pct:pct+'%',cls:good?'good':'bad'};
+}
 
 function habit(iso){
   if(!S.habits[iso]) S.habits[iso]={cafe:false,pre:false,pos:false,janta:false,water:0,am:[],pm:[]};
@@ -599,21 +728,14 @@ function logWorkoutDay(){
 
 function updateHeaderInfo(){
   const el=document.getElementById('headerInfo'); if(!el) return;
-  const dow=new Date().getDay()||7; // 1=Mon...7=Sun
+  const dow=new Date().getDay()||7;
   const dayNames={1:'Push',2:'Stair',3:'Pull',4:'Legs',5:'Upper',6:'Run',7:'Descanso'};
   const dayType=NUTRI.dias[dow];
   const calTarget=dayType==='gym'?'2,500':dayType==='cardio'?'2,200':'2,100';
-
-  // Week in cycle
-  let weekStr='Sin ciclo';
-  if(S.cycleStart){
-    let weeks=Math.floor((new Date(todayISO()+'T00:00:00')-new Date(S.cycleStart+'T00:00:00'))/604800000)+1;
-    if(weeks>7){ weeks=((weeks-1)%7)+1; } // auto-restart
-    const phase=weeks<=2?'Adaptación':weeks<=4?'Construcción':weeks<=6?'Intensificación':'Deload';
-    weekStr='Sem '+weeks+'/7 · '+phase;
-  }
-
-  el.innerHTML=`<span style="background:var(--surface2);padding:3px 9px;border-radius:12px;border:1px solid var(--border)">${weekStr}</span>
+  const w=getActiveWeek();
+  const ph=getPhaseForWeek(w);
+  const bc=getPhaseBannerColor(w);
+  el.innerHTML=`<span onclick="showWeekPicker()" style="cursor:pointer;background:${bc.bg};padding:3px 9px;border-radius:12px;border:1px solid ${bc.border};color:${bc.text}">Sem ${w}/7 · ${ph.name} ▾</span>
     <span style="background:var(--surface2);padding:3px 9px;border-radius:12px;border:1px solid var(--border)">Hoy: ${dayNames[dow]} → Meta ${calTarget} kcal</span>`;
 }
 
@@ -1131,21 +1253,31 @@ function renderGym(){
     <div style="font-size:.72rem;color:var(--text2);margin-top:4px">${checkedCount}/${t.ex.length} ejercicios hechos${checkedCount===t.ex.length?' · 🔥 ¡Completa!':''}</div></div>`:''}</div>`;
 
   const phase=getCurrentPhase();
-  html+=`<div class="flat" style="margin-bottom:12px;font-size:.82rem"><b style="color:${phase.color}">${phase.name}</b> <span style="color:var(--text2)">— ${phase.desc.split('.')[0]}.</span>
-    ${!S.cycleStart?` <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="S.cycleStart=todayISO();save();renderGym()">Empezar ciclo hoy</button>`:` <span style="color:var(--text3);font-size:.74rem">(desde ${S.cycleStart})</span>`}</div>`;
+  const aw=getActiveWeek();
+  const pbc=getPhaseBannerColor(aw);
+  html+=`<div style="margin-bottom:12px;padding:12px;border-radius:12px;background:${pbc.bg};border:2px solid ${pbc.border}">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+      <span style="font-weight:800;font-size:.95rem;color:${pbc.text}">Semana ${aw} — ${phase.name}</span>
+      <span class="pill" style="background:${pbc.bg};color:${pbc.text};border:1px solid ${pbc.border}">Sem ${aw}/7</span>
+    </div>
+    <div style="font-size:.82rem;color:var(--text2);margin-bottom:6px">${getPhaseNote(aw)}</div>
+    <button class="btn btn-ghost btn-sm" style="font-size:.72rem" onclick="showWeekPicker()">Cambiar semana ▾</button>
+  </div>`;
 
   t.ex.forEach((e,i)=>{
     const hist=getExHistory(e.n);
     const lastEntry=hist.length?hist[hist.length-1]:null;
     const advice=e.log?getPhaseAdvice(e):{};
     const exDone=!!exChecksToday[gymOpen+'_'+i];
+    const adaptedS=getAdaptedSets(e);
+    const setsChanged=adaptedS!==e.s;
     html+=`<div class="card${exDone?' ex-done':''}" style="padding:13px">
       <div class="ex" style="border:none;padding:0">
         <div class="top">
           <div class="chk ${exDone?'on':''}" onclick="toggleExCheck('${gymOpen}',${i})" style="margin-top:2px"></div>
           <div style="flex:1">
           <div class="name" style="${exDone?'text-decoration:line-through;opacity:.65':''}">${i+1}. ${e.n}</div>
-          <div class="meta">${e.s}</div>
+          <div class="meta">${adaptedS}${setsChanged?' <span style="color:'+pbc.text+';font-size:.72rem;font-weight:700"> ('+getPhaseForWeek(aw).name+')</span>':''}</div>
           <div class="tags"><span class="tag tech">${e.tech}</span><span class="tag rest">⏱ ${e.rest}</span>
             ${e.rest!=='—'?`<span class="timerbtn" onclick="startRest('${e.rest}')">▶ timer</span>`:''}
           </div>
@@ -1201,11 +1333,10 @@ function setGym(t,i,f,v){
 }
 function getExHistory(name){ return (S.weightlog[name]||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)); }
 function getCurrentPhase(){
-  if(!S.cycleStart) return PHASES[0];
-  const weeks=Math.floor((new Date(todayISO()+'T00:00:00')-new Date(S.cycleStart+'T00:00:00'))/604800000)+1;
-  if(weeks<=2) return PHASES[0];
-  if(weeks<=4) return PHASES[1];
-  if(weeks<=6) return PHASES[2];
+  const w=getActiveWeek();
+  if(w<=2) return PHASES[0];
+  if(w<=4) return PHASES[1];
+  if(w<=6) return PHASES[2];
   return PHASES[3];
 }
 function getPhaseAdvice(exObj){
@@ -1596,6 +1727,65 @@ function renderReport(){
   // Photo link
   if(S.photos&&S.photos.length>=2){
     html+=`<button class="btn btn-ghost btn-block" onclick="go('medidas')">🖼 Ver fotos de progreso →</button>`;
+  }
+
+  // ============ MONTHLY HISTORY ============
+  const currentYM=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  generateMonthReport(currentYM);
+  const availMonths=getAvailableMonths();
+  if(!_reportMonth) _reportMonth=currentYM;
+
+  html+=`<div class="section-h">📅 Historial mensual</div>
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:4px">`;
+  availMonths.forEach(ym=>{
+    const sel=ym===_reportMonth;
+    html+=`<button class="btn ${sel?'btn-lime':'btn-ghost'} btn-sm" style="white-space:nowrap" onclick="_reportMonth='${ym}';renderHoy()">${getMonthName(ym)}</button>`;
+  });
+  html+=`</div>`;
+
+  const selReport=getMonthReport(_reportMonth);
+  const prevYM=getPreviousMonth(_reportMonth);
+  const prevReport=getAvailableMonths().includes(prevYM)?getMonthReport(prevYM):null;
+
+  html+=`<div class="card"><div style="font-weight:800;font-size:1.05rem;margin-bottom:10px">${getMonthName(_reportMonth)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="flat" style="text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--lime)">${selReport.totalWorkouts}</div><div class="muted" style="font-size:.72rem">Entrenamientos</div></div>
+      <div class="flat" style="text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--orange)">${selReport.totalCalsBurned}</div><div class="muted" style="font-size:.72rem">kcal quemadas</div></div>
+      <div class="flat" style="text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--aqua)">${selReport.avgCalsBurned}</div><div class="muted" style="font-size:.72rem">kcal/día prom</div></div>
+      <div class="flat" style="text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--text2)">${selReport.calDays}</div><div class="muted" style="font-size:.72rem">Días registrados</div></div>
+    </div></div>`;
+
+  // Month-over-month comparison
+  if(prevReport&&(prevReport.totalWorkouts>0||prevReport.totalCalsBurned>0)){
+    const cw=compArrow(selReport.totalWorkouts,prevReport.totalWorkouts,false);
+    const cc=compArrow(selReport.totalCalsBurned,prevReport.totalCalsBurned,false);
+    const ca=compArrow(selReport.avgCalsBurned,prevReport.avgCalsBurned,false);
+    html+=`<div class="card" style="border-left:3px solid var(--lime)">
+      <div style="font-weight:700;font-size:.9rem;margin-bottom:10px">${getMonthName(_reportMonth)} vs ${getMonthName(prevYM)}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="row between" style="font-size:.85rem"><span>Entrenamientos</span>
+          <span><b>${prevReport.totalWorkouts}</b> → <b style="color:var(--lime)">${selReport.totalWorkouts}</b>
+          <span class="delta ${cw.cls}" style="margin-left:6px">${cw.arrow} ${cw.pct}</span></span></div>
+        <div class="row between" style="font-size:.85rem"><span>kcal quemadas</span>
+          <span><b>${prevReport.totalCalsBurned}</b> → <b style="color:var(--lime)">${selReport.totalCalsBurned}</b>
+          <span class="delta ${cc.cls}" style="margin-left:6px">${cc.arrow} ${cc.pct}</span></span></div>
+        <div class="row between" style="font-size:.85rem"><span>kcal/día prom</span>
+          <span><b>${prevReport.avgCalsBurned}</b> → <b style="color:var(--lime)">${selReport.avgCalsBurned}</b>
+          <span class="delta ${ca.cls}" style="margin-left:6px">${ca.arrow} ${ca.pct}</span></span></div>`;
+    // Measurement comparison if both months have data
+    if(selReport.lastMeasure&&prevReport.lastMeasure){
+      html+=`<hr class="sep">`;
+      METRICS.forEach(mt=>{
+        const cur=selReport.lastMeasure[mt.k], prev2=prevReport.lastMeasure[mt.k];
+        if(cur==null||prev2==null) return;
+        const diff=+(cur-prev2).toFixed(1);
+        const cm=compArrow(cur,prev2,!!mt.rev);
+        html+=`<div class="row between" style="font-size:.82rem"><span>${mt.ic} ${mt.label}</span>
+          <span><b>${prev2}</b> → <b style="color:var(--lime)">${cur}</b>
+          <span class="delta ${cm.cls}" style="margin-left:6px">${cm.arrow} ${diff>0?'+':''}${diff}</span></span></div>`;
+      });
+    }
+    html+=`</div></div>`;
   }
 
   return html;
