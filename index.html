@@ -1532,6 +1532,23 @@ function startRest(restStr){
 /* =================================================================
    RENDER: COMIDA
    ================================================================= */
+/* =================================================================
+   RENDER: MEDIDAS
+   ================================================================= */
+const METRICS=[
+  {k:'peso', ic:'⚖️', label:'Peso', unit:'kg', rev:null, target:null},
+  {k:'pecho', ic:'👕', label:'Pecho', unit:'cm', rev:false, target:104},
+  {k:'espalda', ic:'🔙', label:'Espalda', unit:'cm', rev:false, target:46},
+  {k:'biceps_r', ic:'💪', label:'Brazo D', unit:'cm', rev:false, target:41},
+  {k:'biceps_l', ic:'💪', label:'Brazo I', unit:'cm', rev:false, target:41},
+  {k:'cintura', ic:'📏', label:'Cintura', unit:'cm', rev:true, target:null},
+  {k:'abdomen', ic:'🎯', label:'Abdomen', unit:'cm', rev:true, target:80},
+  {k:'gluteo', ic:'🍑', label:'Glúteo', unit:'cm', rev:false, target:101},
+  {k:'muslo_r', ic:'🦵', label:'Pierna D', unit:'cm', rev:false, target:58},
+  {k:'muslo_l', ic:'🦵', label:'Pierna I', unit:'cm', rev:false, target:58},
+  {k:'panto_r', ic:'🦶', label:'Pantor. D', unit:'cm', rev:false, target:40},
+  {k:'panto_l', ic:'🦶', label:'Pantor. I', unit:'cm', rev:false, target:40},
+];
 function renderMedidas(){
   const el=document.getElementById('v-medidas');
   const hist=S.measures.slice().sort((a,b)=>a.date.localeCompare(b.date));
