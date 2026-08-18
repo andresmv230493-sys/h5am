@@ -403,42 +403,49 @@ const TREINOS = {
    Running sábado (2 días post-legs, no interfiere con hipertrofia).
    Jueves y viernes SIN cardio — ventana anabólica protegida. */
 let PLAN = [
-  {d:1, lift:'ESP1',  run:null, label:'Espalda Grosor + Bíceps'},
-  {d:2, lift:'PECHO', run:null, label:'Pecho + Hombros + Tríceps'},
-  {d:3, lift:'QUADS', run:null, label:'Cuádriceps + Pantorrillas + Abs'},
+  {d:1, lift:'ESP1',  run:'R3', label:'Espalda Grosor + Bíceps · +Corrida suave PM'},
+  {d:2, lift:'QUADS', run:null, label:'Cuádriceps + Pantorrillas + Abs'},
+  {d:3, lift:'PECHO', run:null, label:'Pecho + Hombros + Tríceps'},
   {d:4, lift:'ESP2',  run:null, label:'Espalda Amplitud + Core'},
   {d:5, lift:'GLUTE', run:null, label:'Glúteos + Femorales + Pantorrillas'},
-  {d:6, lift:'ARMS',  run:null, label:'Brazos + Hombros — Día Playa'},
+  {d:6, lift:'ARMS',  run:'R1', label:'Brazos + Hombros — Día Playa · +Corrida'},
   {d:7, lift:null,    run:null, label:'Descanso + Medición + Caminata larga'},
 ];
-// Lista de las 6 sesiones movibles
+// Lista de las 8 sesiones movibles (6 fuerza + 2 corridas)
 let SESSIONS = [
   {id:'ESP1',  type:'gym', dayDef:1},
-  {id:'PECHO', type:'gym', dayDef:2},
-  {id:'QUADS', type:'gym', dayDef:3},
+  {id:'R3',    type:'run', dayDef:1},
+  {id:'QUADS', type:'gym', dayDef:2},
+  {id:'PECHO', type:'gym', dayDef:3},
   {id:'ESP2',  type:'gym', dayDef:4},
   {id:'GLUTE', type:'gym', dayDef:5},
   {id:'ARMS',  type:'gym', dayDef:6},
+  {id:'R1',    type:'run', dayDef:6},
 ];
 
 function updateLevel(){
-  // Bloque Playa: la semana es fija (6 días de fuerza). El nivel de corrida solo afecta el RunPlayer en Tools.
+  // Bloque Playa: 6 días de fuerza + 2 corridas (LUN suave · SÁB intervalado). El nivel solo cambia la variante de corrida.
+  const lv = S ? (S.level||1) : 1;
+  const rLun = lv>=2 ? 'R3L2' : 'R3';   // continuo suave — martes hay sentadilla
+  const rSab = lv>=2 ? 'R1L2' : 'R1';   // intervalado — único día para intensidad
   PLAN = [
-    {d:1, lift:'ESP1',  run:null, label:'Espalda Grosor + Bíceps'},
-    {d:2, lift:'PECHO', run:null, label:'Pecho + Hombros + Tríceps'},
-    {d:3, lift:'QUADS', run:null, label:'Cuádriceps + Pantorrillas + Abs'},
+    {d:1, lift:'ESP1',  run:rLun, label:'Espalda Grosor + Bíceps · +Corrida suave PM'},
+    {d:2, lift:'QUADS', run:null, label:'Cuádriceps + Pantorrillas + Abs'},
+    {d:3, lift:'PECHO', run:null, label:'Pecho + Hombros + Tríceps'},
     {d:4, lift:'ESP2',  run:null, label:'Espalda Amplitud + Core'},
     {d:5, lift:'GLUTE', run:null, label:'Glúteos + Femorales + Pantorrillas'},
-    {d:6, lift:'ARMS',  run:null, label:'Brazos + Hombros — Día Playa'},
+    {d:6, lift:'ARMS',  run:rSab, label:'Brazos + Hombros — Día Playa · +Corrida'},
     {d:7, lift:null,    run:null, label:'Descanso + Medición + Caminata larga'},
   ];
   SESSIONS = [
     {id:'ESP1',  type:'gym', dayDef:1},
-    {id:'PECHO', type:'gym', dayDef:2},
-    {id:'QUADS', type:'gym', dayDef:3},
+    {id:rLun,    type:'run', dayDef:1},
+    {id:'QUADS', type:'gym', dayDef:2},
+    {id:'PECHO', type:'gym', dayDef:3},
     {id:'ESP2',  type:'gym', dayDef:4},
     {id:'GLUTE', type:'gym', dayDef:5},
     {id:'ARMS',  type:'gym', dayDef:6},
+    {id:rSab,    type:'run', dayDef:6},
   ];
   if(S){ SESSIONS.forEach(se=>{ if(!S.sessions[se.id]) S.sessions[se.id]={done:false, day:se.dayDef}; }); }
 }
@@ -569,6 +576,14 @@ let _reportMonth = null;
   S._bloquePlaya=true;
   S.cycleStart='2026-08-17'; // lunes de arranque del Bloque Playa (5 semanas → 24-sep medición final)
   S.manualWeek=null;
+  localStorage.setItem(KEY,JSON.stringify(S));
+})();
+(function migratePlayaV2(){
+  // v2: martes = piernas (QUADS d2, PECHO d3) + corridas LUN/SÁB como sesiones
+  if(S._playaV2) return;
+  S._playaV2=true;
+  const map={ESP1:1, R3:1, R3L2:1, QUADS:2, PECHO:3, ESP2:4, GLUTE:5, ARMS:6, R1:6, R1L2:6};
+  Object.keys(map).forEach(id=>{ if(S.sessions[id]) S.sessions[id].day=map[id]; });
   localStorage.setItem(KEY,JSON.stringify(S));
 })();
 function save(){ localStorage.setItem(KEY, JSON.stringify(S)); scheduleSync(); }
@@ -1381,7 +1396,13 @@ function renderGym(){
 
   // Notas del Bloque Playa
   if(gymOpen==='QUADS'){
-    html+=`<div class="notice">🦵 8 sets de pantorrilla HOY. Nada de corrida después de este entreno — la caminata de la tarde sí va (es suave y no roba recuperación).</div>`;
+    html+=`<div class="notice">🦵 8 sets de pantorrilla HOY. Prohibido correr hoy y mañana — la caminata de la tarde sí va (es suave y no roba recuperación).</div>`;
+  }
+  if(gymOpen==='ESP1'){
+    html+=`<div class="notice">🏃 Hoy también toca la <b>corrida 1/2</b> de la semana (en la tarde): continua Z3 SUAVE. Cero intervalos — mañana hay sentadilla pesada. Reemplaza la caminata de hoy.</div>`;
+  }
+  if(gymOpen==='ARMS'){
+    html+=`<div class="notice">🏃 Hoy toca la <b>corrida 2/2</b>: intervalado. Si querés meterle Z4 fuerte, este es el ÚNICO día permitido. Reemplaza la caminata de hoy.</div>`;
   }
   if(gymOpen==='GLUTE'){
     html+=`<div class="notice">🍑 El hip thrust es EL constructor de glúteo — progresá el peso agresivo (aguanta más que cualquier otro ejercicio). 7 sets más de pantorrilla hoy: 15 sets semanales totales.</div>`;
@@ -1660,7 +1681,8 @@ function renderTools(){
   html+=`<div class="section-h">ℹ️ Sobre tu plan</div><div class="card"><div class="muted" style="font-size:.83rem;line-height:1.6">
     <b style="color:var(--text)">Perfil:</b> Hombre, 33 años, "falso magro" · objetivo: bajar grasa + recomposición.<br>
     <b style="color:var(--text)">Bloque actual:</b> PLAYA — 5 semanas (18 ago → 24 sep), 6 entrenos/semana: 2× espalda · pecho/hombros · cuádriceps · glúteos/femoral · brazos. 15 sets/sem de pantorrilla.<br>
-    <b style="color:var(--text)">Cardio:</b> caminata rápida 45-60 min TODOS los días (PM). Corridas del RunPlayer = opcionales, nunca después de piernas o glúteos.<br>
+    <b style="color:var(--text)">Corridas (2×/sem):</b> LUNES suave (continua Z3 — el martes hay sentadilla, cero intervalos) y SÁBADO intervalado (Z4 solo acá). La corrida reemplaza la caminata de ese día. Prohibido correr martes, miércoles y viernes. Semanas 3-4 si estás molido: bajá a 1 o 0 — la caminata cubre la grasa.<br>
+    <b style="color:var(--text)">Caminata:</b> 45-60 min rápida los demás días (PM) — el quemador silencioso.<br>
     <b style="color:var(--text)">Fuente:</b> Time Híbrido · Victor Pareto · resp. técnico CREF-SC 025279.</div></div>`;
 
   html+=`<div class="section-h">🏃 Nivel de corrida</div>
