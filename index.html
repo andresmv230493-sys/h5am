@@ -242,7 +242,7 @@ details.awtip summary::-webkit-details-marker{display:none;}
     <!-- ============ GYM ============ -->
     <section class="view" id="v-gym"></section>
     <!-- ============ COMIDA ============ -->
-    <section class="view" id="v-comida"></section>
+    <section class="view" id="v-correr"></section>
     <!-- ============ MEDIDAS ============ -->
     <section class="view" id="v-medidas"></section>
     <!-- ============ TOOLS ============ -->
@@ -253,7 +253,7 @@ details.awtip summary::-webkit-details-marker{display:none;}
     <button data-v="hoy" class="active"><span class="ic">🏠</span>Hoy</button>
     <button data-v="semana"><span class="ic">📅</span>Semana</button>
     <button data-v="gym"><span class="ic">🏋️</span>Gym</button>
-    <button data-v="comida"><span class="ic">🍽️</span>Comida</button>
+    <button data-v="correr"><span class="ic">🏃</span>Correr</button>
     <button data-v="medidas"><span class="ic">📏</span>Medidas</button>
     <button data-v="tools"><span class="ic">🧮</span>Tools</button>
   </nav>
@@ -493,9 +493,9 @@ const MEALS_PLAN = [
 ];
 const MEALS_BASE_CAL=1712, MEALS_BASE_P=200;
 const CARB_EXTRA={
-  gym:{extra:'+197g carbos', cal:'+~788 kcal', total:'~2,500', sugg:'+1 taza arroz (+200kcal) · +1 banana (+100kcal) · +1 camote mediano (+150kcal) · +pan integral (+138kcal) · +avena 50g (+200kcal)'},
-  cardio:{extra:'+122g carbos', cal:'+~488 kcal', total:'~2,200', sugg:'+1 taza arroz · +1 banana · +1 fruta'},
-  rest:{extra:'+97g carbos', cal:'+~388 kcal', total:'~2,100', sugg:'+½ taza arroz · +1 banana'},
+  gym:{extra:'+197g carbos', cal:'+~788 kcal', total:'~2,250', sugg:'+1 taza arroz (+200kcal) · +1 banana (+100kcal) · +1 camote mediano (+150kcal) · +pan integral (+138kcal) · +avena 50g (+200kcal)'},
+  cardio:{extra:'+122g carbos', cal:'+~488 kcal', total:'~2,150', sugg:'+1 taza arroz · +1 banana · +1 fruta'},
+  rest:{extra:'+97g carbos', cal:'+~388 kcal', total:'~2,050', sugg:'+½ taza arroz · +1 banana'},
 };
 /* ---------- FASES DE PROGRESIÓN (ciclo 7 semanas) ---------- */
 const PHASES = [
@@ -832,13 +832,14 @@ function updateStreakDisplay(){
   return count;
 }
 function editStreak(){  const cur=computeStreak();  const val=prompt("Workouts completados este mes:",cur);  if(val===null)return;  const n=parseInt(val);  if(isNaN(n)||n<0)return;  const now=new Date(),ym=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");  if(!S.monthlyWorkouts)S.monthlyWorkouts={};  if(!S.monthlyWorkouts[ym])S.monthlyWorkouts[ym]=[];  const arr=S.monthlyWorkouts[ym];  if(n>arr.length){    for(let i=arr.length;i<n;i++){      const d=new Date(now.getFullYear(),now.getMonth(),Math.max(1,now.getDate()-n+i+1));      const fakeISO=d.toISOString().slice(0,10);      if(!arr.includes(fakeISO))arr.push(fakeISO);    }  }else{    S.monthlyWorkouts[ym]=arr.slice(0,n);  }  save();updateStreakDisplay();
-setTimeout(scrollCalToday,300);}function logWorkoutDay(){
+setTimeout(scrollCalToday,300);}function logWorkoutDay(tag){
+  // Cada SESIÓN completada cuenta como 1 entreno (antes: máx 1 por día aunque hicieras pesas+corrida)
   const now=new Date(), ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   if(!S.monthlyWorkouts) S.monthlyWorkouts={};
   if(!S.monthlyWorkouts[ym]) S.monthlyWorkouts[ym]=[];
-  const today=todayISO();
-  if(!S.monthlyWorkouts[ym].includes(today)){
-    S.monthlyWorkouts[ym].push(today);
+  const key=todayISO()+(tag?('·'+tag):'');
+  if(!S.monthlyWorkouts[ym].includes(key)){
+    S.monthlyWorkouts[ym].push(key);
     save();
   }
   updateStreakDisplay();
@@ -847,14 +848,15 @@ setTimeout(scrollCalToday,300);}function logWorkoutDay(){
 function updateHeaderInfo(){
   const el=document.getElementById('headerInfo'); if(!el) return;
   const dow=new Date().getDay()||7;
-  const dayNames={1:'Push',2:'Stair',3:'Pull',4:'Legs',5:'Upper',6:'Run',7:'Descanso'};
+  const dayNames={1:'Espalda1',2:'Piernas',3:'Pecho',4:'Espalda2',5:'Glúteos',6:'Brazos',7:'Descanso'};
   const dayType=NUTRI.dias[dow];
-  const calTarget=dayType==='gym'?'2,500':dayType==='cardio'?'2,200':'2,100';
+  const calTarget=dayType==='gym'?'2,250':dayType==='cardio'?'2,150':'2,050';
+  const burnT=burnTarget(todayISO());
   const w=getActiveWeek();
   const ph=getPhaseForWeek(w);
   const bc=getPhaseBannerColor(w);
   el.innerHTML=`<span onclick="showWeekPicker()" style="cursor:pointer;background:${bc.bg};padding:3px 9px;border-radius:12px;border:1px solid ${bc.border};color:${bc.text}">Sem ${w}/5 · ${ph.name} ▾</span>
-    <span style="background:var(--surface2);padding:3px 9px;border-radius:12px;border:1px solid var(--border)">Hoy: ${dayNames[dow]} → Meta ${calTarget} kcal</span>`;
+    <span style="background:var(--surface2);padding:3px 9px;border-radius:12px;border:1px solid var(--border)">Hoy: ${dayNames[dow]} · ${calTarget} kcal 🍽 · ${burnT} 🔥</span>`;
 }
 
 /* ---------- Calorie date selector helpers ---------- */
@@ -888,7 +890,7 @@ function toggleExCheck(treino,idx){
   // If ALL exercises in this session are now checked, log workout day for streak
   const t=TREINOS[treino];
   const allChecked=t.ex.every((_,i)=>S.exerciseChecks[date][treino+'_'+i]);
-  if(allChecked){ logWorkoutDay(); toast('🔥 ¡'+t.name+' completado!'); }
+  if(allChecked){ logWorkoutDay(treino); toast('🔥 ¡'+t.name+' completado!'); }
   save(); renderGym();
 }
 
@@ -1009,7 +1011,7 @@ function renderHoy(){
       <span style="font-size:1.1rem">${m.ic}</span>
       <div style="flex:1;font-size:.85rem"><b>${m.name}</b> <span class="muted">${m.cal} kcal</span></div></div>`;
   });
-  html += `<div style="text-align:right;margin-top:8px"><span class="timerbtn" onclick="go('comida')">Ver detalle + recetas →</span></div></div>`;
+  html += `<div style="text-align:right;margin-top:8px"><span class="timerbtn" onclick="gymOpen='NUTRI';go('gym')">Ver detalle + recetas →</span></div></div>`;
 
   // FOTO DEL DÍA
   const todayPhoto = S.photos ? S.photos.find(p=>p.date===todayISO()) : null;
@@ -1316,6 +1318,13 @@ function renderGym(){
         <div style="margin-top:8px;padding:9px;background:var(--bg2);border-radius:9px;font-size:.82rem;color:var(--text2)"><b style="color:var(--text)">Modificaciones:</b> ${ph.mods}</div></div>`;
     });
     html+=`<div class="notice">💡 Si fallaste reps 2 semanas seguidas con el mismo peso, baja 10% y vuelve a subir. El ego no mueve pesos, la técnica sí.</div>`;
+    // Sobre tu plan (movido de Tools)
+    html+=`<div class="section-h">ℹ️ Sobre tu plan</div><div class="card"><div class="muted" style="font-size:.83rem;line-height:1.6">
+    <b style="color:var(--text)">Bloque:</b> PLAYA — 5 semanas (18 ago → 24 sep), 6 entrenos/sem: 2× espalda · pecho/hombros · cuádriceps · glúteos/femoral · brazos. 15 sets/sem de pantorrilla.<br>
+    <b style="color:var(--text)">Meta kcal activas:</b> L/S ~900 · K–V ~700 · D ~400 (~4,900/sem).<br>
+    <b style="color:var(--text)">Caminata:</b> 45-60 min rápida los días sin corrida (PM).<br>
+    <b style="color:var(--text)">Perfil:</b> Hombre, 33 años · objetivo: marcado + recomposición.<br>
+    <b style="color:var(--text)">Fuente original:</b> Time Híbrido · Victor Pareto · CREF-SC 025279.</div></div>`;
     el.innerHTML=html; return;
   }
 
@@ -1324,7 +1333,7 @@ function renderGym(){
     html+=`<div class="card card-accent"><div style="font-weight:800;font-size:1.05rem">Estrategia Nutricional Corregida</div>
       <div class="muted" style="margin-top:6px;font-size:.84rem;line-height:1.55">${NUTRI.regla}</div></div>`;
     const dayNames=['','Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-    const dayLabels=['','Push','Stair','Pull','Legs','Upper','Run','Descanso'];
+    const dayLabels=['','Espalda1+Run','Piernas','Pecho','Espalda2','Glúteos','Brazos+Run','Descanso'];
     for(let d=1;d<=7;d++){
       const tipo=NUTRI.dias[d]; const n=NUTRI[tipo];
       html+=`<div class="card" style="padding:12px"><div class="row between"><div><b style="font-size:.9rem">${dayNames[d]} — ${dayLabels[d]}</b>
@@ -1375,6 +1384,15 @@ function renderGym(){
         html+=`<div class="flat" style="margin-bottom:6px;font-size:.82rem"><span style="color:var(--text2)">${k}:</span> <b>${d.w||0}kg × ${d.r||0} reps</b></div>`;
       });
     }
+    // Calculadora 1RM (movida de Tools)
+    html+=`<div class="section-h">🏋️ Calculadora de 1RM y cargas</div>
+    <div class="card"><div class="row" style="gap:10px">
+      <div style="flex:1"><label class="fld">Peso usado (kg)</label><input type="number" inputmode="decimal" id="rmW" placeholder="ej. 20"></div>
+      <div style="flex:1"><label class="fld">Reps máximas</label><input type="number" inputmode="numeric" id="rmR" placeholder="ej. 10"></div>
+    </div>
+    <button class="btn btn-lime btn-block" style="margin-top:12px" onclick="calcRM()">Calcular</button>
+    <div id="rmOut" style="margin-top:12px"></div>
+    <div class="muted" style="font-size:.74rem;margin-top:8px">Fórmula de Epley. Usa cargas que te permitan entre 6 y 12 reps para mayor precisión.</div></div>`;
     el.innerHTML=html; return;
   }
 
@@ -1514,65 +1532,6 @@ function startRest(restStr){
 /* =================================================================
    RENDER: COMIDA
    ================================================================= */
-function renderComida(){
-  const el=document.getElementById('v-comida');
-  const iso=todayISO();
-  const dow=new Date().getDay()||7;
-  const dayType=NUTRI.dias[dow];
-  const ce=CARB_EXTRA[dayType];
-  if(!S.habits[iso]) S.habits[iso]={meals:{}};
-  const hm=S.habits[iso].meals||{};
-
-  let checkedCal=0;
-  MEALS_PLAN.forEach(m=>{if(hm[m.k]) checkedCal+=m.cal;});
-
-  let html=`<h2 class="title">Nutrición</h2>
-    <div class="card" style="text-align:center"><div class="row between" style="margin-bottom:6px">
-      <span class="muted">Base: ${MEALS_BASE_CAL} kcal</span><span class="muted">${ce.cal} extra carbos</span>
-      <b style="color:var(--lime);font-size:1.05rem">Meta: ${ce.total} kcal</b></div>
-      <div class="bar"><i style="width:${Math.min(100,Math.round(checkedCal/parseInt(ce.total.replace(/[~,]/g,''))*100))}%"></i></div>
-      <div class="muted" style="margin-top:6px;font-size:.78rem">Comidas marcadas: ${checkedCal} kcal · Proteína base: ~${MEALS_BASE_P}g</div></div>`;
-
-  // Carb cycling card
-  html+=`<div class="card" style="border-left:3px solid var(--lime);background:rgba(194,249,79,.04)">
-    <div style="font-weight:700;font-size:.9rem;color:var(--lime)">Día de ${dayType==='gym'?'Gym':dayType==='cardio'?'Cardio':'Descanso'} → ${ce.extra}</div>
-    <div class="muted" style="margin-top:4px;font-size:.82rem">Distribuí entre las comidas: ${ce.sugg}</div></div>`;
-
-  // Meal cards
-  html+=`<div class="section-h">5 comidas del día</div>`;
-  MEALS_PLAN.forEach(m=>{
-    const on=!!hm[m.k];
-    html+=`<div class="card" style="padding:12px;${on?'opacity:.6':''}">
-      <div class="row" style="cursor:pointer" onclick="toggleMealNew('${m.k}')">
-        <div class="chk ${on?'on':''}"></div>
-        <div style="font-size:1.3rem">${m.ic}</div>
-        <div style="flex:1"><div style="font-weight:700;font-size:.88rem">${m.name} <span style="color:var(--lime);font-size:.78rem">${m.cal} kcal</span></div>
-          <div class="muted" style="font-size:.78rem">${m.items}</div></div>
-      </div>
-      <div class="macros" style="margin:6px 0 0"><div class="macro"><b>${m.p}g</b><span>Prot</span></div>
-        <div class="macro"><b>${m.c}g</b><span>Carb</span></div><div class="macro"><b>${m.f}g</b><span>Grasa</span></div></div>
-    </div>`;
-  });
-
-  el.innerHTML=html;
-}
-/* =================================================================
-   RENDER: MEDIDAS
-   ================================================================= */
-const METRICS=[
-  {k:'peso', ic:'⚖️', label:'Peso', unit:'kg', rev:null, target:null},
-  {k:'pecho', ic:'👕', label:'Pecho', unit:'cm', rev:false, target:104},
-  {k:'espalda', ic:'🔙', label:'Espalda', unit:'cm', rev:false, target:46},
-  {k:'biceps_r', ic:'💪', label:'Brazo D', unit:'cm', rev:false, target:41},
-  {k:'biceps_l', ic:'💪', label:'Brazo I', unit:'cm', rev:false, target:41},
-  {k:'cintura', ic:'📏', label:'Cintura', unit:'cm', rev:true, target:null},
-  {k:'abdomen', ic:'🎯', label:'Abdomen', unit:'cm', rev:true, target:80},
-  {k:'gluteo', ic:'🍑', label:'Glúteo', unit:'cm', rev:false, target:101},
-  {k:'muslo_r', ic:'🦵', label:'Pierna D', unit:'cm', rev:false, target:58},
-  {k:'muslo_l', ic:'🦵', label:'Pierna I', unit:'cm', rev:false, target:58},
-  {k:'panto_r', ic:'🦶', label:'Pantor. D', unit:'cm', rev:false, target:40},
-  {k:'panto_l', ic:'🦶', label:'Pantor. I', unit:'cm', rev:false, target:40},
-];
 function renderMedidas(){
   const el=document.getElementById('v-medidas');
   const hist=S.measures.slice().sort((a,b)=>a.date.localeCompare(b.date));
@@ -1683,68 +1642,6 @@ function renderTools(){
   const el=document.getElementById('v-tools');
   let html=`<h2 class="title">Herramientas</h2>`;
 
-  // Guías de corrida
-  const lv = S.level||1;
-  const runIds = lv>=2 ? ['R1L2','R2L2','R3L2'] : ['R1','R2','R3'];
-  html+=`<div class="section-h">🏃 Guías de corrida (paso a paso) · Nv.${lv}</div><div class="card">
-    <div class="muted" style="font-size:.82rem;margin-bottom:11px">Tocá una corrida y la app te lleva fase por fase: te avisa <b>cuándo cambiar</b> (vibra y suena) y <b>a qué pulso</b> ir. Las zonas son <b style="color:var(--lime)">pulso, no velocidad</b>.</div>`;
-  runIds.forEach(id=>{ const r=RUNS[id];
-    html+=`<button class="btn btn-ghost btn-block" style="justify-content:space-between;margin-bottom:8px" onclick="RunPlayer.open('${id}')"><span>▶ ${r.name}</span><span class="muted" style="font-size:.74rem">${r.tot}</span></button>`; });
-  html+=appleWatchTipHTML()+`</div>`;
-
-  // FCmax
-  html+=`<div class="section-h">❤️ Calculadora FCmáx + Zonas</div>
-    <div class="card"><div class="row" style="gap:10px;align-items:flex-end">
-      <div style="flex:1"><label class="fld">Edad</label><input type="number" id="fcAge" value="${PERFIL.edad}" onchange="recalcFC(this.value)"></div>
-      <div style="text-align:center;flex:1"><div class="muted" style="font-size:.72rem">FCmáx (Tanaka)</div><div class="big" style="font-size:2rem;color:var(--lime)" id="fcOut">${PERFIL.fcmax}</div><div class="muted" style="font-size:.7rem">bpm</div></div>
-    </div><div id="zonesOut" style="margin-top:14px"></div></div>`;
-
-  // 1RM
-  html+=`<div class="section-h">🏋️ Calculadora de 1RM y cargas</div>
-    <div class="card"><div class="row" style="gap:10px">
-      <div style="flex:1"><label class="fld">Peso usado (kg)</label><input type="number" inputmode="decimal" id="rmW" placeholder="ej. 20"></div>
-      <div style="flex:1"><label class="fld">Reps máximas</label><input type="number" inputmode="numeric" id="rmR" placeholder="ej. 10"></div>
-    </div>
-    <button class="btn btn-lime btn-block" style="margin-top:12px" onclick="calcRM()">Calcular</button>
-    <div id="rmOut" style="margin-top:12px"></div>
-    <div class="muted" style="font-size:.74rem;margin-top:8px">Fórmula de Epley. Usa cargas que te permitan entre 6 y 12 reps para mayor precisión.</div></div>`;
-
-  // referencia zonas
-  html+=`<div class="section-h">📖 Referencia: zonas de esfuerzo</div><div class="card">`;
-  ZONAS.forEach(z=> html+=`<div class="zone"><span class="dot" style="background:${z.color}"></span>
-    <span class="zn" style="color:${z.color}">${z.z}</span>
-    <span class="zd">${z.label} · ${z.desc}</span><span class="bpm">${z.pct[0]}-${z.pct[1]}%</span></div>`);
-  html+=`<div class="muted" style="font-size:.74rem;margin-top:6px">Sin pulsómetro, guíate por la respiración: en Z3 conversas con dificultad; en Z4 casi no puedes hablar.</div></div>`;
-
-  // info plan
-  html+=`<div class="section-h">ℹ️ Sobre tu plan</div><div class="card"><div class="muted" style="font-size:.83rem;line-height:1.6">
-    <b style="color:var(--text)">Perfil:</b> Hombre, 33 años, "falso magro" · objetivo: bajar grasa + recomposición.<br>
-    <b style="color:var(--text)">Bloque actual:</b> PLAYA — 5 semanas (18 ago → 24 sep), 6 entrenos/semana: 2× espalda · pecho/hombros · cuádriceps · glúteos/femoral · brazos. 15 sets/sem de pantorrilla.<br>
-    <b style="color:var(--text)">Corridas (2×/sem):</b> LUNES suave (continua Z3 — el martes hay sentadilla, cero intervalos) y SÁBADO intervalado (Z4 solo acá). La corrida reemplaza la caminata de ese día. Prohibido correr martes, miércoles y viernes. Semanas 3-4 si estás molido: bajá a 1 o 0 — la caminata cubre la grasa.<br>
-    <b style="color:var(--text)">Caminata:</b> 45-60 min rápida los demás días (PM) — el quemador silencioso.<br>
-    <b style="color:var(--text)">Fuente:</b> Time Híbrido · Victor Pareto · resp. técnico CREF-SC 025279.</div></div>`;
-
-  html+=`<div class="section-h">🏃 Nivel de corrida</div>
-    <div class="card">
-      <div class="muted" style="font-size:.84rem;margin-bottom:12px">Elegí la dificultad de tus corridas. El gym no cambia.</div>
-      <div class="row" style="gap:8px">
-        <button class="btn ${(S.level||1)===1?'btn-lime':'btn-ghost'} btn-sm" style="flex:1" onclick="setLevel(1);renderTools()">Nv.1 Iniciante</button>
-        <button class="btn ${(S.level||1)===2?'btn-lime':'btn-ghost'} btn-sm" style="flex:1" onclick="setLevel(2);renderTools()">Nv.2 Intermedio</button>
-      </div>
-      <div style="margin-top:14px">
-        <div style="font-weight:500;font-size:.88rem;margin-bottom:6px;color:var(--lime)">Nivel 1 — Iniciante</div>
-        <div class="muted" style="font-size:.82rem;line-height:1.5;margin-bottom:12px">
-          R1: Intervalos 1:1 (15x 1min Z3 / 1min Z1)<br>
-          R2: Intervalos 2:2 (6x 2min Z4 / 2min Z1)<br>
-          R3: Continuo 25 min (Z3 sostenido)</div>
-        <div style="font-weight:500;font-size:.88rem;margin-bottom:6px;color:var(--lime)">Nivel 2 — Intermedio</div>
-        <div class="muted" style="font-size:.82rem;line-height:1.5">
-          R1: Progresivo Z3→Z4 (5x Z3 + 5x Z4, intervalos 2:1)<br>
-          R2: Bloques Z4 + Picos Z5 (5 rondas con sprints en zona máxima)<br>
-          R3: Tempo Run 35 min (incluye 15 min sostenidos en Z4)</div>
-      </div>
-    </div>`;
-
   // Sync & Backup
   const su=syncUrl(), lastS=localStorage.getItem(SYNC_TS_KEY);
   html+=`<div class="section-h">☁️ Sync & Backup</div><div class="card">`;
@@ -1763,6 +1660,54 @@ function renderTools(){
     <label class="btn btn-ghost btn-sm" style="flex:1;justify-content:center">⬆️ Importar JSON<input type="file" accept="application/json,.json" style="display:none" onchange="importData(event)"></label>
   </div>
   <div class="muted" style="font-size:.7rem;margin-top:8px">El export descarga TODO tu estado (medidas, cargas, calorías) como archivo. El import lo restaura en otro dispositivo.</div></div>`;
+
+  el.innerHTML=html;
+}
+
+function renderCorrer(){
+  const el=document.getElementById('v-correr');
+  const lv = S.level||1;
+  let html=`<h2 class="title">Correr</h2>`;
+
+  // Mapa del bloque
+  html+=`<div class="card card-accent"><div style="font-weight:800">🗺️ Corridas del Bloque Playa · 2×/semana</div>
+    <div class="muted" style="font-size:.84rem;line-height:1.65;margin-top:6px">
+    <b style="color:var(--lime)">LUNES</b> — continua Z3 <b>SUAVE</b>. El martes hay sentadilla: cero intervalos.<br>
+    <b style="color:var(--lime)">SÁBADO</b> — intervalado. Si querés Z4 fuerte, <b>solo acá</b>.<br>
+    La corrida <b>reemplaza la caminata</b> de ese día. ❌ Prohibido correr mar · mié · vie.<br>
+    Semanas 3-4 molido → bajá a 1 o 0: la caminata diaria (45-60 min) cubre la grasa.</div></div>`;
+
+  // Guías de corrida
+  const runIds = lv>=2 ? ['R1L2','R2L2','R3L2'] : ['R1','R2','R3'];
+  html+=`<div class="section-h">🏃 Guías paso a paso · Nv.${lv}</div><div class="card">
+    <div class="muted" style="font-size:.82rem;margin-bottom:11px">Tocá una corrida y la app te lleva fase por fase: te avisa <b>cuándo cambiar</b> (vibra y suena) y <b>a qué pulso</b> ir. Las zonas son <b style="color:var(--lime)">pulso, no velocidad</b>.</div>`;
+  runIds.forEach(id=>{ const r=RUNS[id];
+    html+=`<button class="btn btn-ghost btn-block" style="justify-content:space-between;margin-bottom:8px" onclick="RunPlayer.open('${id}')"><span>▶ ${r.name}</span><span class="muted" style="font-size:.74rem">${r.tot}</span></button>`; });
+  html+=appleWatchTipHTML()+`</div>`;
+
+  // Nivel
+  html+=`<div class="section-h">🎚️ Nivel de corrida</div>
+    <div class="card"><div class="row" style="gap:8px">
+      <button class="btn ${lv===1?'btn-lime':'btn-ghost'} btn-sm" style="flex:1" onclick="setLevel(1);renderCorrer()">Nv.1 Iniciante</button>
+      <button class="btn ${lv===2?'btn-lime':'btn-ghost'} btn-sm" style="flex:1" onclick="setLevel(2);renderCorrer()">Nv.2 Intermedio</button>
+    </div>
+    <div class="muted" style="font-size:.78rem;line-height:1.55;margin-top:10px">
+      <b style="color:var(--lime)">Nv.1:</b> R1 intervalos 1:1 (Z3) · R2 intervalos 2:2 (Z4) · R3 continuo 25 min (Z3)<br>
+      <b style="color:var(--lime)">Nv.2:</b> R1 progresivo Z3→Z4 · R2 bloques Z4 + picos Z5 · R3 tempo run 35 min</div></div>`;
+
+  // FCmax + Zonas
+  html+=`<div class="section-h">❤️ FCmáx + Zonas</div>
+    <div class="card"><div class="row" style="gap:10px;align-items:flex-end">
+      <div style="flex:1"><label class="fld">Edad</label><input type="number" id="fcAge" value="${PERFIL.edad}" onchange="recalcFC(this.value)"></div>
+      <div style="text-align:center;flex:1"><div class="muted" style="font-size:.72rem">FCmáx (Tanaka)</div><div class="big" style="font-size:2rem;color:var(--lime)" id="fcOut">${PERFIL.fcmax}</div><div class="muted" style="font-size:.7rem">bpm</div></div>
+    </div><div id="zonesOut" style="margin-top:14px"></div></div>`;
+
+  // Referencia zonas
+  html+=`<div class="section-h">📖 Referencia: zonas de esfuerzo</div><div class="card">`;
+  ZONAS.forEach(z=> html+=`<div class="zone"><span class="dot" style="background:${z.color}"></span>
+    <span class="zn" style="color:${z.color}">${z.z}</span>
+    <span class="zd">${z.label} · ${z.desc}</span><span class="bpm">${z.pct[0]}-${z.pct[1]}%</span></div>`);
+  html+=`<div class="muted" style="font-size:.74rem;margin-top:6px">Sin pulsómetro, guíate por la respiración: en Z3 conversas con dificultad; en Z4 casi no puedes hablar.</div></div>`;
 
   el.innerHTML=html;
   renderZones();
@@ -1798,8 +1743,10 @@ function newWeek(){
   S.startDate=todayISO(); save(); toast('Nueva semana lista 🔄'); go('hoy');
 }
 function completeSession(id){
-  const st=S.sessions[id]; st.done=!st.done; save();
-  if(st.done) logWorkoutDay();
+  const st=S.sessions[id];
+  if(!st){ logWorkoutDay(id); toast('✓ Corrida registrada'); renderAll(); return; }
+  st.done=!st.done; save();
+  if(st.done) logWorkoutDay(id);
   updateStreakDisplay();
   if(st.done) toast('✓ Sesión completada');
   renderAll();
@@ -1822,7 +1769,7 @@ function toggleMealNew(k){
   if(!S.habits[iso]) S.habits[iso]={meals:{}};
   if(!S.habits[iso].meals) S.habits[iso].meals={};
   S.habits[iso].meals[k]=!S.habits[iso].meals[k];
-  save(); renderComida(); renderHoy();
+  save(); renderHoy();
 }
 function renderReport(){
   let html='';
@@ -1852,19 +1799,19 @@ function renderReport(){
       <div style="width:100%;height:${h}px;background:${w.cal?'var(--lime)':'var(--surface2)'};border-radius:4px"></div>
       <span style="font-size:.6rem;color:var(--text3)">${w.day}</span></div>`;
   });
-  html+=`</div><div class="muted" style="text-align:center;margin-top:4px">Total semana: <b style="color:var(--lime)">${totalWeekCals} kcal</b></div></div>`;
+  html+=`</div><div class="muted" style="text-align:center;margin-top:4px">Total semana: <b style="color:var(--lime)">${totalWeekCals}</b> / meta ~${weekCals.reduce((a,w)=>a+burnTarget(w.iso),0)} kcal</div></div>`;
 
   // Stats
   const done=SESSIONS.filter(se=>S.sessions[se.id].done).length;
-  const dow=new Date().getDay()||7;
-  const dayType=NUTRI.dias[dow];
-  const calTarget=dayType==='gym'?'2,500':dayType==='cardio'?'2,200':'2,100';
+  const burnT=burnTarget(todayISO());
+  const todayAct=activeCals(todayISO());
+  const weekTarget=weekCals.reduce((a,w)=>a+burnTarget(w.iso),0);
 
   html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
     <div class="card" style="text-align:center;padding:12px"><div style="font-size:1.6rem;font-weight:800;color:var(--lime)">${done}/${SESSIONS.length}</div><div class="muted" style="font-size:.74rem">Sesiones esta semana</div></div>
-    <div class="card" style="text-align:center;padding:12px"><div style="font-size:1.6rem;font-weight:800;color:var(--lime)">${calTarget}</div><div class="muted" style="font-size:.74rem">Meta kcal hoy</div></div>
+    <div class="card" style="text-align:center;padding:12px"><div style="font-size:1.6rem;font-weight:800;color:${todayAct>=burnT*0.9?'var(--lime)':'var(--orange)'}">${todayAct}<span style="font-size:.85rem;color:var(--text2)">/${burnT}</span></div><div class="muted" style="font-size:.74rem">kcal activas hoy / meta</div></div>
     <div class="card" style="text-align:center;padding:12px"><div style="font-size:1.6rem;font-weight:800;color:var(--orange)">🔥 ${monthDays}</div><div class="muted" style="font-size:.74rem">Entrenamientos este mes</div></div>
-    <div class="card" style="text-align:center;padding:12px"><div style="font-size:1.6rem;font-weight:800;color:var(--aqua)">${totalWeekCals}</div><div class="muted" style="font-size:.74rem">kcal quemadas semana</div></div>
+    <div class="card" style="text-align:center;padding:12px"><div style="font-size:1.6rem;font-weight:800;color:${totalWeekCals>=weekTarget*0.85?'var(--lime)':'var(--aqua)'}">${totalWeekCals}<span style="font-size:.85rem;color:var(--text2)">/${weekTarget}</span></div><div class="muted" style="font-size:.74rem">kcal activas semana / meta</div></div>
   </div>`;
 
   // Body measurements vs goals
@@ -2071,7 +2018,7 @@ function go(v){
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.v===v));
   window.scrollTo(0,0);
   if(v==='hoy')renderHoy(); if(v==='semana')renderSemana(); if(v==='gym')renderGym();
-  if(v==='comida')renderComida(); if(v==='medidas')renderMedidas(); if(v==='tools')renderTools();
+  if(v==='correr')renderCorrer(); if(v==='medidas')renderMedidas(); if(v==='tools')renderTools();
 }
 document.querySelectorAll('nav button').forEach(b=> b.onclick=()=>go(b.dataset.v));
 
