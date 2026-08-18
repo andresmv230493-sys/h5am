@@ -329,56 +329,72 @@ const RUNS = {
     ]},
 };
 
-/* ---------- MUSCULAÇÃO (Programa Híbrido corregido) ---------- */
+/* ---------- MUSCULAÇÃO — BLOQUE PLAYA (5 semanas · 18 ago → 24 sep) ---------- */
 const TREINOS = {
-  PUSH:{ name:'Push Day', focus:'Pecho · Hombros · Tríceps', color:'var(--blue)',
+  ESP1:{ name:'Espalda Grosor + Bíceps', focus:'Espalda pesada · Bíceps · Prioridad #1', color:'var(--green)',
+    ex:[
+      {n:'Calentamiento / movilidad espalda', s:'5 min', tech:'Aquecimiento', rest:'—', log:false},
+      {n:'Peso muerto convencional', s:'4 × 5-6', tech:'Compuesto', rest:'2-3 min', log:true},
+      {n:'Remo con barra', s:'4 × 8-10', tech:'Compuesto', rest:'2 min', log:true},
+      {n:'Remo en cable sentado', s:'3 × 10-12', tech:'Compuesto', rest:'90 seg', log:true},
+      {n:'Jalón al pecho (lat pulldown)', s:'3 × 10-12', tech:'Compuesto', rest:'90 seg', log:true},
+      {n:'Face pulls', s:'3 × 15', tech:'Aislamiento', rest:'60 seg', log:true},
+      {n:'Curl con barra', s:'4 × 8-10', tech:'Aislamiento', rest:'60 seg', log:true},
+      {n:'Curl martillo', s:'3 × 10-12', tech:'Aislamiento', rest:'60 seg', log:true},
+    ]},
+  PECHO:{ name:'Pecho + Hombros + Tríceps', focus:'Press pesado · Laterales · Tríceps', color:'var(--blue)',
     ex:[
       {n:'Calentamiento / movilidad hombros', s:'5 min', tech:'Aquecimiento', rest:'—', log:false},
       {n:'Press banca plano (barra)', s:'4 × 6-8', tech:'Compuesto', rest:'2-3 min', log:true},
-      {n:'Press inclinado con mancuernas', s:'3 × 8-10', tech:'Compuesto', rest:'90 seg', log:true},
-      {n:'Press militar OHP (barra)', s:'3 × 8-10', tech:'Compuesto', rest:'2 min', log:true},
-      {n:'Elevaciones laterales', s:'3 × 12-15', tech:'Aislamiento', rest:'60 seg', log:true},
+      {n:'Press inclinado con mancuernas', s:'4 × 8-10', tech:'Compuesto', rest:'90 seg', log:true},
+      {n:'Press militar OHP (barra)', s:'4 × 6-8', tech:'Compuesto', rest:'2 min', log:true},
+      {n:'Elevaciones laterales', s:'4 × 12-15', tech:'Aislamiento', rest:'60 seg', log:true},
+      {n:'Cruce en polea (o peck deck)', s:'3 × 12-15', tech:'Aislamiento', rest:'60 seg', log:true},
       {n:'Tricep pushdown (cuerda)', s:'3 × 10-12', tech:'Aislamiento', rest:'60 seg', log:true},
       {n:'Extensión de tríceps overhead', s:'3 × 10-12', tech:'Aislamiento', rest:'60 seg', log:true},
     ]},
-  STAIR:{ name:'StairMaster Day', focus:'Cardio · Core · Pantorrillas Extra', color:'var(--orange)',
-    ex:[
-      {n:'StairMaster (progresivo)', s:'25-40 min', tech:'Cardio Z2-Z3', rest:'—', log:false},
-      {n:'Plancha', s:'3 × 30-60 seg', tech:'Core isométrico', rest:'45 seg', log:false},
-      {n:'Ab wheel (rolinho)', s:'3 × 10-12', tech:'Core dinámico', rest:'45 seg', log:false},
-      {n:'Calf raises de pie (pesado)', s:'3 × 15-20', tech:'Hipertrofia', rest:'60 seg', log:true},
-      {n:'Calf raises sentado', s:'3 × 15-20', tech:'Hipertrofia', rest:'60 seg', log:true},
-    ]},
-  PULL:{ name:'Pull Day', focus:'Espalda · Bíceps · Trapecios', color:'var(--green)',
-    ex:[
-      {n:'Calentamiento / movilidad espalda', s:'5 min', tech:'Aquecimiento', rest:'—', log:false},
-      {n:'Peso muerto convencional', s:'4 × 6-8', tech:'Compuesto', rest:'2-3 min', log:true},
-      {n:'Remo con barra', s:'4 × 8-10', tech:'Compuesto', rest:'2 min', log:true},
-      {n:'Jalón al pecho (lat pulldown)', s:'3 × 10-12', tech:'Compuesto', rest:'90 seg', log:true},
-      {n:'Face pulls', s:'3 × 12-15', tech:'Aislamiento', rest:'60 seg', log:true},
-      {n:'Curl con barra', s:'3 × 10-12', tech:'Aislamiento', rest:'60 seg', log:true},
-      {n:'Curl martillo', s:'3 × 10-12', tech:'Aislamiento', rest:'60 seg', log:true},
-    ]},
-  LEGS:{ name:'Legs Heavy', focus:'Cuádriceps · Isquios · Glúteos · Pantorrillas 9+ sets', color:'var(--purple)',
+  QUADS:{ name:'Cuádriceps + Pantorrillas I', focus:'Sentadilla pesada · 8 sets pantorrilla · Abs', color:'var(--purple)',
     ex:[
       {n:'Calentamiento / movilidad piernas', s:'5 min', tech:'Aquecimiento', rest:'—', log:false},
       {n:'Sentadilla (back squat)', s:'4 × 6-8', tech:'Compuesto', rest:'2-3 min', log:true},
-      {n:'Prensa de piernas (leg press)', s:'4 × 8-10', tech:'Compuesto', rest:'2 min', log:true},
-      {n:'Peso muerto rumano (RDL)', s:'3 × 8-10', tech:'Compuesto', rest:'2 min', log:true},
-      {n:'Curl femoral (leg curl)', s:'3 × 10-12', tech:'Aislamiento', rest:'60 seg', log:true},
-      {n:'Extensión de piernas', s:'3 × 10-12', tech:'Aislamiento', rest:'60 seg', log:true},
-      {n:'Pantorrilla de pie (pesado)', s:'3 × 12-15', tech:'Hipertrofia', rest:'60 seg', log:true},
-      {n:'Pantorrilla sentado', s:'3 × 12-15', tech:'Hipertrofia', rest:'60 seg', log:true},
-      {n:'Pantorrilla en prensa', s:'3 × 15-20', tech:'Hipertrofia', rest:'60 seg', log:true},
+      {n:'Prensa de piernas (leg press)', s:'4 × 10-12', tech:'Compuesto', rest:'2 min', log:true},
+      {n:'Extensión de piernas', s:'3 × 12-15', tech:'Aislamiento', rest:'60 seg', log:true},
+      {n:'Zancadas búlgaras (mancuernas)', s:'3 × 10-12 /pierna', tech:'Compuesto', rest:'90 seg', log:true},
+      {n:'Pantorrilla de pie (pesado)', s:'4 × 10-12', tech:'Hipertrofia', rest:'60 seg', log:true},
+      {n:'Pantorrilla sentado', s:'4 × 15-20', tech:'Hipertrofia', rest:'60 seg', log:true},
+      {n:'Ab wheel + Plancha', s:'3 rondas (10-12 + 45s)', tech:'Core', rest:'45 seg', log:false},
     ]},
-  UPPER:{ name:'Upper Body Completo', focus:'Pecho · Espalda · Hombros · Brazos', color:'var(--aqua)',
+  ESP2:{ name:'Espalda Amplitud + Core', focus:'Dominadas · V-taper · Hombro posterior', color:'var(--aqua)',
     ex:[
-      {n:'Calentamiento / movilidad general', s:'5 min', tech:'Aquecimiento', rest:'—', log:false},
-      {n:'Press inclinado con barra', s:'3 × 8-10', tech:'Compuesto', rest:'2 min', log:true},
-      {n:'Dominadas lastradas (o gravitón)', s:'3 × 6-8', tech:'Compuesto', rest:'2 min', log:true},
-      {n:'Press hombros con mancuernas', s:'3 × 8-10', tech:'Compuesto', rest:'90 seg', log:true},
-      {n:'Remo en cable sentado', s:'3 × 10-12', tech:'Compuesto', rest:'90 seg', log:true},
-      {n:'SS: Curl bíceps + Ext. tríceps', s:'3 × 10-12 c/u', tech:'Super-set', rest:'60 seg', log:true},
+      {n:'Calentamiento / movilidad espalda', s:'5 min', tech:'Aquecimiento', rest:'—', log:false},
+      {n:'Dominadas lastradas (o gravitón)', s:'4 × 6-10', tech:'Compuesto', rest:'2 min', log:true},
+      {n:'Jalón al pecho agarre cerrado', s:'3 × 10-12', tech:'Compuesto', rest:'90 seg', log:true},
+      {n:'Serrucho (remo unilateral) con mancuerna', s:'3 × 10-12', tech:'Compuesto', rest:'90 seg', log:true},
+      {n:'Pullover en polea', s:'3 × 12-15', tech:'Aislamiento', rest:'60 seg', log:true},
+      {n:'Posterior de hombro en polea', s:'4 × 15', tech:'Aislamiento', rest:'60 seg', log:true},
+      {n:'Encogimiento (trapecio) mancuernas', s:'3 × 12-15', tech:'Aislamiento', rest:'60 seg', log:true},
+      {n:'Elevación de piernas colgado', s:'3 × 10-15', tech:'Core', rest:'45 seg', log:false},
+    ]},
+  GLUTE:{ name:'Glúteos + Femorales + Pantorrillas II', focus:'Hip thrust protagonista · 7 sets pantorrilla', color:'var(--orange)',
+    ex:[
+      {n:'Calentamiento / movilidad cadera', s:'5 min', tech:'Aquecimiento', rest:'—', log:false},
+      {n:'Hip thrust (barra)', s:'4 × 8-12', tech:'Compuesto', rest:'2 min', log:true},
+      {n:'Peso muerto rumano (RDL)', s:'4 × 8-10', tech:'Compuesto', rest:'2 min', log:true},
+      {n:'Curl femoral (leg curl)', s:'3 × 10-12', tech:'Aislamiento', rest:'60 seg', log:true},
+      {n:'Abductora', s:'3 × 15-20', tech:'Aislamiento', rest:'45 seg', log:true},
+      {n:'Patada de glúteo en polea', s:'3 × 12-15 /pierna', tech:'Aislamiento', rest:'45 seg', log:true},
+      {n:'Pantorrilla en prensa', s:'4 × 12-15', tech:'Hipertrofia', rest:'60 seg', log:true},
+      {n:'Calf raises de pie (pesado)', s:'3 × 15-20', tech:'Hipertrofia', rest:'60 seg', log:true},
+    ]},
+  ARMS:{ name:'Brazos + Hombros — Día Playa', focus:'Laterales alto volumen · Bíceps · Tríceps · Abs', color:'var(--lime)',
+    ex:[
+      {n:'Calentamiento / movilidad hombros', s:'5 min', tech:'Aquecimiento', rest:'—', log:false},
+      {n:'Elevaciones laterales', s:'5 × 12-20', tech:'Aislamiento', rest:'60 seg', log:true},
+      {n:'Fondos en paralelas (o banco)', s:'3 × 10-12', tech:'Compuesto', rest:'90 seg', log:true},
+      {n:'Curl con barra', s:'4 × 8-10', tech:'Aislamiento', rest:'60 seg', log:true},
+      {n:'Tríceps francés + Curl martillo con mancuernas', s:'3 × 10-12 c/u', tech:'Super-set', rest:'60 seg', log:true},
+      {n:'SS: Curl bíceps + Ext. tríceps', s:'3 × 12 c/u', tech:'Super-set', rest:'60 seg', log:true},
+      {n:'Circuito abs: rueda + crunch polea + plancha', s:'3 rondas', tech:'Core', rest:'60 seg', log:false},
     ]},
 };
 
@@ -387,43 +403,42 @@ const TREINOS = {
    Running sábado (2 días post-legs, no interfiere con hipertrofia).
    Jueves y viernes SIN cardio — ventana anabólica protegida. */
 let PLAN = [
-  {d:1, lift:'PUSH',  run:null, label:'Push — Pecho/Hombros/Tríceps'},
-  {d:2, lift:'STAIR', run:null, label:'StairMaster + Core + Pantorrillas'},
-  {d:3, lift:'PULL',  run:null, label:'Pull — Espalda/Bíceps/Trapecios'},
-  {d:4, lift:'LEGS',  run:null, label:'Legs Heavy — SIN CARDIO'},
-  {d:5, lift:'UPPER', run:null, label:'Upper Body Completo — SIN CARDIO'},
-  {d:6, lift:null,    run:'R1', label:'Running (según nivel)'},
-  {d:7, lift:null,    run:null, label:'Descanso + Medición'},
+  {d:1, lift:'ESP1',  run:null, label:'Espalda Grosor + Bíceps'},
+  {d:2, lift:'PECHO', run:null, label:'Pecho + Hombros + Tríceps'},
+  {d:3, lift:'QUADS', run:null, label:'Cuádriceps + Pantorrillas + Abs'},
+  {d:4, lift:'ESP2',  run:null, label:'Espalda Amplitud + Core'},
+  {d:5, lift:'GLUTE', run:null, label:'Glúteos + Femorales + Pantorrillas'},
+  {d:6, lift:'ARMS',  run:null, label:'Brazos + Hombros — Día Playa'},
+  {d:7, lift:null,    run:null, label:'Descanso + Medición + Caminata larga'},
 ];
 // Lista de las 6 sesiones movibles
 let SESSIONS = [
-  {id:'PUSH',  type:'gym', dayDef:1},
-  {id:'STAIR', type:'gym', dayDef:2},
-  {id:'PULL',  type:'gym', dayDef:3},
-  {id:'LEGS',  type:'gym', dayDef:4},
-  {id:'UPPER', type:'gym', dayDef:5},
-  {id:'R1',    type:'run', dayDef:6},
+  {id:'ESP1',  type:'gym', dayDef:1},
+  {id:'PECHO', type:'gym', dayDef:2},
+  {id:'QUADS', type:'gym', dayDef:3},
+  {id:'ESP2',  type:'gym', dayDef:4},
+  {id:'GLUTE', type:'gym', dayDef:5},
+  {id:'ARMS',  type:'gym', dayDef:6},
 ];
 
 function updateLevel(){
-  const lv = S ? (S.level||1) : 1;
-  const r = lv>=2 ? 'R1L2' : 'R1';
+  // Bloque Playa: la semana es fija (6 días de fuerza). El nivel de corrida solo afecta el RunPlayer en Tools.
   PLAN = [
-    {d:1, lift:'PUSH',  run:null, label:'Push — Pecho/Hombros/Tríceps'},
-    {d:2, lift:'STAIR', run:null, label:'StairMaster + Core + Pantorrillas'},
-    {d:3, lift:'PULL',  run:null, label:'Pull — Espalda/Bíceps/Trapecios'},
-    {d:4, lift:'LEGS',  run:null, label:'Legs Heavy — SIN CARDIO'},
-    {d:5, lift:'UPPER', run:null, label:'Upper Body Completo — SIN CARDIO'},
-    {d:6, lift:null,    run:r, label:'Running (según nivel)'},
-    {d:7, lift:null,    run:null, label:'Descanso + Medición'},
+    {d:1, lift:'ESP1',  run:null, label:'Espalda Grosor + Bíceps'},
+    {d:2, lift:'PECHO', run:null, label:'Pecho + Hombros + Tríceps'},
+    {d:3, lift:'QUADS', run:null, label:'Cuádriceps + Pantorrillas + Abs'},
+    {d:4, lift:'ESP2',  run:null, label:'Espalda Amplitud + Core'},
+    {d:5, lift:'GLUTE', run:null, label:'Glúteos + Femorales + Pantorrillas'},
+    {d:6, lift:'ARMS',  run:null, label:'Brazos + Hombros — Día Playa'},
+    {d:7, lift:null,    run:null, label:'Descanso + Medición + Caminata larga'},
   ];
   SESSIONS = [
-    {id:'PUSH',  type:'gym', dayDef:1},
-    {id:'STAIR', type:'gym', dayDef:2},
-    {id:'PULL',  type:'gym', dayDef:3},
-    {id:'LEGS',  type:'gym', dayDef:4},
-    {id:'UPPER', type:'gym', dayDef:5},
-    {id:r,       type:'run', dayDef:6},
+    {id:'ESP1',  type:'gym', dayDef:1},
+    {id:'PECHO', type:'gym', dayDef:2},
+    {id:'QUADS', type:'gym', dayDef:3},
+    {id:'ESP2',  type:'gym', dayDef:4},
+    {id:'GLUTE', type:'gym', dayDef:5},
+    {id:'ARMS',  type:'gym', dayDef:6},
   ];
   if(S){ SESSIONS.forEach(se=>{ if(!S.sessions[se.id]) S.sessions[se.id]={done:false, day:se.dayDef}; }); }
 }
@@ -477,19 +492,19 @@ const CARB_EXTRA={
 };
 /* ---------- FASES DE PROGRESIÓN (ciclo 7 semanas) ---------- */
 const PHASES = [
-  {w:'1-2', name:'Adaptación', color:'var(--blue)', desc:'Volumen base como está listado. RPE 7-8. Aprender movimientos y establecer cargas de referencia.', mods:'Sin drop sets ni rest-pause. Foco 100% en técnica y rango completo de movimiento.'},
-  {w:'3-4', name:'Construcción', color:'var(--green)', desc:'+1 serie en compuestos principales. +2.5-5kg en compuestos. Introduce drop sets en última serie de accesorios.', mods:'Drop set solo en la ÚLTIMA serie de cada ejercicio de aislamiento. Compuestos: sube peso si completaste todas las reps la semana anterior.'},
-  {w:'5-6', name:'Intensificación', color:'var(--orange)', desc:'Rest-pause en compuestos. Supersets en accesorios. Volumen pico — la semana más dura del ciclo.', mods:'Rest-pause: llega a falla → 15 seg pausa → repite hasta falla. Supersets en todos los accesorios. Prepárate para el deload.'},
-  {w:'7', name:'Deload', color:'var(--text2)', desc:'-40-50% del volumen. Mantiene la misma intensidad (pesos). Recuperación activa — el cuerpo se repara y crece.', mods:'Mitad de las series, mismos pesos. NO agregues sets extras. El crecimiento pasa durante el deload, no durante las semanas duras.'},
+  {w:'—', name:'Adaptación', color:'var(--blue)', desc:'(No se usa en el Bloque Playa — ya venís entrenado.)', mods:'—'},
+  {w:'1-2', name:'Construcción', color:'var(--green)', desc:'Cargas de referencia en semana 1, y desde ahí +2.5-5kg en compuestos cada vez que completes todas las reps. Drop set en la última serie de aislamientos.', mods:'RPE 8. Registrá TODAS las cargas — sin registro no hay progresión. Caminata 45-60 min TODOS los días en la tarde.'},
+  {w:'3-4', name:'Intensificación', color:'var(--orange)', desc:'Volumen pico. Rest-pause en el último ejercicio de cada grupo muscular. Supersets en accesorios. Las 2 semanas más duras del bloque.', mods:'Rest-pause: falla → 15 seg → repetir hasta falla. Dormí 7.5h+ — acá se decide el bloque. Caminata diaria innegociable.'},
+  {w:'5', name:'Deload', color:'var(--blue)', desc:'Semana final pre-viaje (18-24 sep): -40% del volumen, MISMOS pesos. Llegás fresco, lleno y marcado al avión. Medición final el 24-sep.', mods:'Mitad de series, mismos pesos. Carbos normales (no hagas locuras de deshidratación). Foto final + medidas el jueves 24.'},
 ];
 
 /* ---------- NUTRICIÓN CORREGIDA (déficit neto semanal) ---------- */
 const NUTRI = {
-  gym:    {cal:'~2,500', p:'160g', c:'250g', f:'70g', tipo:'Mantenimiento', color:'var(--blue)', desc:'Suficiente para rendir y recuperar sin exceso. Los carbos van pre y post entreno.'},
-  cardio: {cal:'~2,200', p:'160g', c:'200g', f:'60g', tipo:'Déficit leve', color:'var(--green)', desc:'Proteína alta para preservar músculo. Carbos reducidos porque la demanda muscular es menor.'},
-  rest:   {cal:'~2,100', p:'150g', c:'180g', f:'60g', tipo:'Déficit leve', color:'var(--text2)', desc:'Prioriza proteína y grasas saludables. Carbos bajos — no los necesitás sin entreno.'},
-  regla: 'El error clásico: superávit en días de gym neutraliza el déficit de los otros días → 0 pérdida de grasa. La corrección: mantenimiento en gym (no superávit), déficit leve en cardio y descanso. Resultado: déficit neto semanal de ~1,400-2,100 kcal → pierdes ~0.2-0.3 kg de grasa por semana sin perder músculo.',
-  dias: {1:'gym',2:'cardio',3:'gym',4:'gym',5:'gym',6:'cardio',7:'rest'},
+  gym:    {cal:'~2,250', p:'170g', c:'210g', f:'60g', tipo:'Déficit leve', color:'var(--blue)', desc:'Bloque Playa: déficit suave con proteína ALTA (2.3g/kg). Carbos pre y post entreno para levantar pesado.'},
+  cardio: {cal:'~2,150', p:'170g', c:'180g', f:'60g', tipo:'Déficit leve', color:'var(--green)', desc:'Proteína alta para proteger músculo. Carbos moderados.'},
+  rest:   {cal:'~2,050', p:'165g', c:'150g', f:'60g', tipo:'Déficit', color:'var(--text2)', desc:'Domingo: proteína + grasas saludables, carbos bajos. Caminata larga en ayunas opcional.'},
+  regla: 'BLOQUE PLAYA (18 ago → 24 sep): déficit leve TODOS los días + proteína 165-175g innegociable + hierro pesado = te marcás sin comerte el músculo. La caminata diaria de 45-60 min es el quemador silencioso: ~350-450 kcal sin costo de recuperación. Alcohol = le resta directo al six-pack. Meta 24-sep: abdomen ~79, cintura ~77.',
+  dias: {1:'gym',2:'gym',3:'gym',4:'gym',5:'gym',6:'gym',7:'rest'},
 };
 
 
@@ -548,6 +563,13 @@ let _reportMonth = null;
     });
   });
   S._wMigrated=true; if(found>0){ localStorage.setItem(KEY,JSON.stringify(S)); }
+})();
+(function migrateBloquePlaya(){
+  if(S._bloquePlaya) return;
+  S._bloquePlaya=true;
+  S.cycleStart='2026-08-17'; // lunes de arranque del Bloque Playa (5 semanas → 24-sep medición final)
+  S.manualWeek=null;
+  localStorage.setItem(KEY,JSON.stringify(S));
 })();
 function save(){ localStorage.setItem(KEY, JSON.stringify(S)); scheduleSync(); }
 
@@ -610,13 +632,12 @@ function getActiveWeek(){
   if(S.manualWeek) return S.manualWeek;
   if(!S.cycleStart) return 1;
   let weeks=Math.floor((new Date(todayISO()+'T00:00:00')-new Date(S.cycleStart+'T00:00:00'))/604800000)+1;
-  if(weeks>7) weeks=((weeks-1)%7)+1;
+  if(weeks>5) weeks=((weeks-1)%5)+1;
   return weeks;
 }
 function getPhaseForWeek(w){
-  if(w<=2) return {name:'Adaptación',color:'var(--green)',idx:0};
-  if(w<=4) return {name:'Construcción',color:'#e8c94a',idx:1};
-  if(w<=6) return {name:'Intensificación',color:'var(--orange)',idx:2};
+  if(w<=2) return {name:'Construcción',color:'#e8c94a',idx:1};
+  if(w<=4) return {name:'Intensificación',color:'var(--orange)',idx:2};
   return {name:'Deload',color:'var(--blue)',idx:3};
 }
 const MAIN_COMPOUNDS=['Press banca plano (barra)','Sentadilla (back squat)','Peso muerto convencional','Press militar OHP (barra)','Remo con barra'];
@@ -653,7 +674,7 @@ function showWeekPicker(){
   h+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px;max-width:340px;width:100%;max-height:85vh;overflow-y:auto">';
   h+='<div style="font-weight:800;font-size:1.1rem;margin-bottom:4px">Seleccionar semana</div>';
   h+='<div class="muted" style="margin-bottom:16px;font-size:.82rem">Elegí en qué semana del ciclo estás. La rutina se adapta automáticamente.</div>';
-  for(let i=1;i<=7;i++){
+  for(let i=1;i<=5;i++){
     const ph=getPhaseForWeek(i);
     const bc=getPhaseBannerColor(i);
     const sel=i===w;
@@ -790,7 +811,7 @@ function updateHeaderInfo(){
   const w=getActiveWeek();
   const ph=getPhaseForWeek(w);
   const bc=getPhaseBannerColor(w);
-  el.innerHTML=`<span onclick="showWeekPicker()" style="cursor:pointer;background:${bc.bg};padding:3px 9px;border-radius:12px;border:1px solid ${bc.border};color:${bc.text}">Sem ${w}/7 · ${ph.name} ▾</span>
+  el.innerHTML=`<span onclick="showWeekPicker()" style="cursor:pointer;background:${bc.bg};padding:3px 9px;border-radius:12px;border:1px solid ${bc.border};color:${bc.text}">Sem ${w}/5 · ${ph.name} ▾</span>
     <span style="background:var(--surface2);padding:3px 9px;border-radius:12px;border:1px solid var(--border)">Hoy: ${dayNames[dow]} → Meta ${calTarget} kcal</span>`;
 }
 
@@ -1217,7 +1238,7 @@ function isoForDay(d){
 /* =================================================================
    RENDER: GYM (todos los treinos)
    ================================================================= */
-let gymOpen='PUSH';
+let gymOpen='ESP1';
 function renderGym(){
   const el=document.getElementById('v-gym');
   let tabs=`<div class="row" style="gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px">`;
@@ -1318,7 +1339,7 @@ function renderGym(){
   html+=`<div style="margin-bottom:12px;padding:12px;border-radius:12px;background:${pbc.bg};border:2px solid ${pbc.border}">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
       <span style="font-weight:800;font-size:.95rem;color:${pbc.text}">Semana ${aw} — ${phase.name}</span>
-      <span class="pill" style="background:${pbc.bg};color:${pbc.text};border:1px solid ${pbc.border}">Sem ${aw}/7</span>
+      <span class="pill" style="background:${pbc.bg};color:${pbc.text};border:1px solid ${pbc.border}">Sem ${aw}/5</span>
     </div>
     <div style="font-size:.82rem;color:var(--text2);margin-bottom:6px">${getPhaseNote(aw)}</div>
     <button class="btn btn-ghost btn-sm" style="font-size:.72rem" onclick="showWeekPicker()">Cambiar semana ▾</button>
@@ -1358,12 +1379,15 @@ function renderGym(){
     html+=`</div></div>`;
   });
 
-  // StairMaster note
-  if(gymOpen==='STAIR'){
-    html+=`<div class="notice">⚠️ El StairMaster es cardio de resistencia (15-20% bodyweight por paso), NO cuenta como hipertrofia de pantorrillas. Los calf raises pesados de este día sí cuentan. El volumen real de pantor. viene de Legs (jueves) + estos 6 sets extras.</div>`;
+  // Notas del Bloque Playa
+  if(gymOpen==='QUADS'){
+    html+=`<div class="notice">🦵 8 sets de pantorrilla HOY. Nada de corrida después de este entreno — la caminata de la tarde sí va (es suave y no roba recuperación).</div>`;
   }
-  if(gymOpen==='LEGS'){
-    html+=`<div class="notice">🦵 9+ sets directos de pantorrillas en este día. SIN CARDIO hoy ni mañana — protegemos la ventana anabólica de 48-72h para máxima síntesis proteica muscular en piernas.</div>`;
+  if(gymOpen==='GLUTE'){
+    html+=`<div class="notice">🍑 El hip thrust es EL constructor de glúteo — progresá el peso agresivo (aguanta más que cualquier otro ejercicio). 7 sets más de pantorrilla hoy: 15 sets semanales totales.</div>`;
+  }
+  if(gymOpen==='ESP1'||gymOpen==='ESP2'){
+    html+=`<div class="notice">🔙 Espalda = tu prioridad #1 del bloque (2× por semana). Sentí cada rep en la espalda, no en el brazo: iniciá el jalón con los codos.</div>`;
   }
 
   html+=`<div id="restTimer" style="position:fixed;bottom:74px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--lime);color:var(--lime);padding:10px 18px;border-radius:30px;font-weight:800;display:none;z-index:90"></div>`;
@@ -1394,9 +1418,8 @@ function setGym(t,i,f,v){
 function getExHistory(name){ return (S.weightlog[name]||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)); }
 function getCurrentPhase(){
   const w=getActiveWeek();
-  if(w<=2) return PHASES[0];
-  if(w<=4) return PHASES[1];
-  if(w<=6) return PHASES[2];
+  if(w<=2) return PHASES[1];
+  if(w<=4) return PHASES[2];
   return PHASES[3];
 }
 function getPhaseAdvice(exObj){
@@ -1636,8 +1659,8 @@ function renderTools(){
   // info plan
   html+=`<div class="section-h">ℹ️ Sobre tu plan</div><div class="card"><div class="muted" style="font-size:.83rem;line-height:1.6">
     <b style="color:var(--text)">Perfil:</b> Hombre, 33 años, "falso magro" · objetivo: bajar grasa + recomposición.<br>
-    <b style="color:var(--text)">Corrida:</b> 5KM Iniciante Nível 3 (mejorar tiempo, velocidad y resistencia).<br>
-    <b style="color:var(--text)">Fuerza:</b> 5 entrenos/semana (Push/Stair/Pull/Legs/Upper).<br>
+    <b style="color:var(--text)">Bloque actual:</b> PLAYA — 5 semanas (18 ago → 24 sep), 6 entrenos/semana: 2× espalda · pecho/hombros · cuádriceps · glúteos/femoral · brazos. 15 sets/sem de pantorrilla.<br>
+    <b style="color:var(--text)">Cardio:</b> caminata rápida 45-60 min TODOS los días (PM). Corridas del RunPlayer = opcionales, nunca después de piernas o glúteos.<br>
     <b style="color:var(--text)">Fuente:</b> Time Híbrido · Victor Pareto · resp. técnico CREF-SC 025279.</div></div>`;
 
   html+=`<div class="section-h">🏃 Nivel de corrida</div>
