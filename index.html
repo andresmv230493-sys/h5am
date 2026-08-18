@@ -533,7 +533,8 @@ function load(){
   s.frase = s.frase || {};       // ISO -> idx
   s.level = s.level || 1;
   s.monthlyWorkouts = s.monthlyWorkouts || {};
-  s.calsBurned = s.calsBurned || {};
+  s.calsBurned = s.calsBurned || {};   // LEGACY: totales del día (junio)
+  s.calsEx = s.calsEx || {};           // NUEVO: {ISO:{w:pesas, c:cardio, o:otro}} — solo ejercicio
   s.photos = s.photos || [];
   s.manualWeek = s.manualWeek || null;
   s.monthlyReports = s.monthlyReports || {};
@@ -587,6 +588,28 @@ let _reportMonth = null;
   localStorage.setItem(KEY,JSON.stringify(S));
 })();
 function save(){ localStorage.setItem(KEY, JSON.stringify(S)); scheduleSync(); }
+
+/* ---------- CALORÍAS ACTIVAS (solo ejercicio) ---------- */
+function activeCals(iso){
+  const e=(S.calsEx||{})[iso];
+  return e ? (e.w||0)+(e.c||0)+(e.o||0) : 0;
+}
+function activeCalsLegacy(iso){
+  const a=activeCals(iso); if(a) return a;
+  return (S.calsBurned&&S.calsBurned[iso])||0;
+}
+function burnTarget(iso){
+  const dow=new Date(iso+'T00:00:00').getDay(); const d=dow===0?7:dow;
+  if(d===1||d===6) return 900;  // pesas + corrida
+  if(d===7) return 400;         // caminata larga
+  return 700;                   // pesas + caminata
+}
+function setCalEx(k,v){
+  if(!S.calsEx) S.calsEx={};
+  const e=S.calsEx[_calDate]||(S.calsEx[_calDate]={});
+  e[k]=parseInt(v)||0;
+  save(); renderHoy();
+}
 
 /* =================================================================
    SYNC & BACKUP — Google Sheet vía Apps Script
@@ -719,8 +742,11 @@ function generateMonthReport(ym){
   if(!ym){ const now=new Date(); ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'); }
   const workouts=(S.monthlyWorkouts&&S.monthlyWorkouts[ym])||[];
   let totalCals=0, calDays=0;
-  Object.entries(S.calsBurned||{}).forEach(([date,cal])=>{
-    if(date.startsWith(ym)&&cal>0){ totalCals+=cal; calDays++; }
+  const calDates=new Set(Object.keys(S.calsBurned||{}).concat(Object.keys(S.calsEx||{})));
+  calDates.forEach(date=>{
+    if(!date.startsWith(ym)) return;
+    const cal=activeCalsLegacy(date);
+    if(cal>0){ totalCals+=cal; calDays++; }
   });
   const monthMeasures=(S.measures||[]).filter(m=>m.date.startsWith(ym)).sort((a,b)=>a.date.localeCompare(b.date));
   const lastMeasure=monthMeasures.length?monthMeasures[monthMeasures.length-1]:null;
@@ -742,6 +768,7 @@ function getAvailableMonths(){
   const months=new Set();
   Object.keys(S.monthlyWorkouts||{}).forEach(ym=>months.add(ym));
   Object.keys(S.calsBurned||{}).forEach(date=>months.add(date.slice(0,7)));
+  Object.keys(S.calsEx||{}).forEach(date=>months.add(date.slice(0,7)));
   (S.measures||[]).forEach(m=>months.add(m.date.slice(0,7)));
   Object.keys(S.monthlyReports||{}).forEach(ym=>months.add(ym));
   const now=new Date(); months.add(now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'));
@@ -935,27 +962,39 @@ function renderHoy(){
       <button class="btn btn-lime btn-block" style="margin-top:11px" onclick="go('medidas')">Ir a Medidas →</button></div>`;
   }
 
-  // CALORÍAS QUEMADAS con selector de fecha
+  // CALORÍAS ACTIVAS (solo ejercicio) con selector de fecha
   const monthDays=getMonthDays();
-  html += `<div class="section-h">🔥 Calorías quemadas (smartwatch)</div>
+  const ex=(S.calsEx&&S.calsEx[_calDate])||{};
+  const actTot=(ex.w||0)+(ex.c||0)+(ex.o||0);
+  const tgt=burnTarget(_calDate);
+  const pct=Math.min(100,Math.round(actTot/tgt*100));
+  html += `<div class="section-h">🔥 Calorías activas (solo ejercicio)</div>
     <div class="card">
+      <div class="muted" style="font-size:.76rem;margin-bottom:9px">Anotá las kcal de cada ENTRENO del reloj (workouts / anillo Movimiento) — <b>NO las totales del día</b>. Meta de hoy: <b style="color:var(--lime)">~${tgt} kcal</b> · L/S ~900 · K–V ~700 · D ~400.</div>
       <div id="calMonthScroll2" style="display:flex;gap:5px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px;-webkit-overflow-scrolling:touch">`;
   monthDays.forEach(wd=>{
     const sel=wd.iso===_calDate;
-    const cal=S.calsBurned[wd.iso]||0;
+    const a=activeCals(wd.iso);
+    const leg=!a&&S.calsBurned&&S.calsBurned[wd.iso]?S.calsBurned[wd.iso]:0;
     const isToday=wd.isToday;
     html+=`<div class="cal-day${sel?' sel':''}" onclick="selectCalDate('${wd.iso}')" style="min-width:46px;flex-shrink:0;${isToday&&!sel?'border-color:var(--green);background:rgba(78,217,138,.1)':''}">
       <span class="cd-nm" style="${isToday?'color:var(--green);font-weight:800':''}">${wd.name}</span>
       <span class="cd-d">${wd.date}</span>
-      ${cal?`<span class="cd-cal">${cal}</span>`:'<span style="height:12px"></span>'}
+      ${a?`<span class="cd-cal">${a}</span>`:leg?`<span class="cd-cal" style="opacity:.38">${leg}ᵗ</span>`:'<span style="height:12px"></span>'}
     </div>`;
-  });  html+=`</div>
-    <div class="row" style="gap:10px">
-      <span style="font-size:1.3rem">🔥</span>
-      <input type="number" inputmode="numeric" placeholder="kcal" value="${S.calsBurned[_calDate]||''}"
-        onchange="S.calsBurned['${_calDate}']=parseInt(this.value)||0;save();renderHoy()" style="flex:1">
-      <span class="muted" style="font-size:.78rem">kcal ${_calDate===todayISO()?'hoy':_calDate.slice(5)}</span>
-    </div></div>`;
+  });
+  html+=`</div>
+    <div class="row" style="gap:8px">
+      <div style="flex:1"><label class="fld">🏋️ Pesas</label><input type="number" inputmode="numeric" placeholder="kcal" value="${ex.w||''}" onchange="setCalEx('w',this.value)"></div>
+      <div style="flex:1"><label class="fld">🏃 Cardio</label><input type="number" inputmode="numeric" placeholder="kcal" value="${ex.c||''}" onchange="setCalEx('c',this.value)"></div>
+      <div style="flex:1"><label class="fld">➕ Otro</label><input type="number" inputmode="numeric" placeholder="kcal" value="${ex.o||''}" onchange="setCalEx('o',this.value)"></div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="row between" style="margin-bottom:4px"><span style="font-size:.8rem;font-weight:700">Total ${_calDate===todayISO()?'hoy':_calDate.slice(5)}: ${actTot} kcal</span>
+      <span style="font-size:.76rem;font-weight:700;color:${actTot>tgt*1.4?'var(--orange)':actTot>=tgt*0.9?'var(--lime)':'var(--orange)'}">${actTot>tgt*1.4?'pasado — comé ~150 extra hoy':actTot>=tgt*0.9?'✓ en meta':'faltan '+(tgt-actTot)}</span></div>
+      <div class="bar" style="height:8px"><i style="width:${pct}%;${actTot>tgt*1.4?'background:var(--orange)':''}"></i></div>
+    </div>
+    <div class="muted" style="font-size:.68rem;margin-top:7px">Cardio = corrida o caminata. Los números grises con ᵗ son registros viejos en modo "total del día" (junio) — otra métrica, no comparables.</div></div>`;
 
   // COMIDAS (simplified in Hoy view)
   const dayType2=NUTRI.dias[new Date().getDay()||7];
@@ -1796,7 +1835,7 @@ function renderReport(){
   for(let i=6;i>=0;i--){
     const d=new Date(); d.setDate(d.getDate()-i);
     const iso=d.toISOString().slice(0,10);
-    weekCals.push({day:dayNames[(d.getDay()+6)%7],cal:S.calsBurned[iso]||0,iso});
+    weekCals.push({day:dayNames[(d.getDay()+6)%7],cal:activeCalsLegacy(iso),iso});
   }
   const totalWeekCals=weekCals.reduce((a,b)=>a+b.cal,0);
   const maxCal=Math.max(...weekCals.map(w=>w.cal),1);
