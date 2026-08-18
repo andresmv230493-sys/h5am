@@ -116,7 +116,7 @@ svg.ring circle{fill:none; stroke-width:9;}
 svg.ring .bg{stroke:var(--bg2);}
 svg.ring .fg{stroke:var(--lime); stroke-linecap:round; transition:stroke-dashoffset .6s;}
 /* inputs */
-input[type=number],input[type=date]{
+input[type=number],input[type=date],input[type=url]{
   font-family:inherit; background:var(--bg2); border:1px solid var(--border); color:var(--text);
   border-radius:9px; padding:9px; font-size:1rem; font-weight:600; width:100%; text-align:center;}
 input:focus{outline:none; border-color:var(--lime);}
@@ -549,7 +549,61 @@ let _reportMonth = null;
   });
   S._wMigrated=true; if(found>0){ localStorage.setItem(KEY,JSON.stringify(S)); }
 })();
-function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+function save(){ localStorage.setItem(KEY, JSON.stringify(S)); scheduleSync(); }
+
+/* =================================================================
+   SYNC & BACKUP — Google Sheet vía Apps Script
+   La URL del script vive SOLO en localStorage (nunca en el repo).
+   ================================================================= */
+const SYNC_URL_KEY='h5am_sync_url', SYNC_TS_KEY='h5am_last_sync';
+function syncUrl(){ return localStorage.getItem(SYNC_URL_KEY)||''; }
+let _syncT=null;
+function scheduleSync(){ if(!syncUrl()) return; clearTimeout(_syncT); _syncT=setTimeout(()=>syncNow(false),4000); }
+function syncPayload(){
+  const c=Object.assign({},S); delete c.photos; // fotos = pesadas, quedan solo en el cel
+  c._sentAt=new Date().toISOString();
+  return JSON.stringify(c);
+}
+async function syncNow(manual){
+  const url=syncUrl();
+  if(!url){ if(manual) toast('Configurá primero la URL de sync'); return; }
+  if(!navigator.onLine){ if(manual) toast('Sin conexión — intentá luego'); return; }
+  try{
+    await fetch(url,{method:'POST',mode:'no-cors',body:syncPayload()});
+    localStorage.setItem(SYNC_TS_KEY,new Date().toISOString());
+    if(manual){ toast('☁️ Datos sincronizados'); renderTools(); }
+  }catch(e){ if(manual) toast('Error de sync — revisá la URL'); }
+}
+function setSyncUrl(){
+  const inp=document.getElementById('syncUrlInp'); const v=((inp&&inp.value)||'').trim();
+  if(!v.startsWith('https://script.google.com/')){ toast('Pegá la URL /exec de Apps Script'); return; }
+  localStorage.setItem(SYNC_URL_KEY,v); toast('Sync configurado ✓'); syncNow(true); renderTools();
+}
+function clearSyncUrl(){ if(confirm('¿Quitar la configuración de sync en este dispositivo?')){ localStorage.removeItem(SYNC_URL_KEY); renderTools(); } }
+function exportData(){
+  const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='h5am-export-'+todayISO()+'.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000);
+}
+function importData(ev){
+  const f=ev.target.files&&ev.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+      const d=JSON.parse(r.result);
+      if(!d||typeof d!=='object'||!('measures' in d)) throw 0;
+      if(!confirm('Esto REEMPLAZA los datos de este dispositivo con los del archivo. ¿Continuar?')) return;
+      localStorage.setItem(KEY,JSON.stringify(d)); location.reload();
+    }catch(e){ toast('Archivo inválido'); } };
+  r.readAsText(f);
+}
+/* auto-sync al abrir si pasaron >6h de la última */
+(function(){
+  if(!syncUrl()) return;
+  const last=localStorage.getItem(SYNC_TS_KEY);
+  if(!last || (Date.now()-new Date(last).getTime())>6*3600e3) setTimeout(()=>syncNow(false),2500);
+})();
 
 /* ---------- WEEK / PHASE HELPERS ---------- */
 function getActiveWeek(){
@@ -1606,6 +1660,25 @@ function renderTools(){
           R3: Tempo Run 35 min (incluye 15 min sostenidos en Z4)</div>
       </div>
     </div>`;
+
+  // Sync & Backup
+  const su=syncUrl(), lastS=localStorage.getItem(SYNC_TS_KEY);
+  html+=`<div class="section-h">☁️ Sync & Backup</div><div class="card">`;
+  if(su){
+    html+=`<div style="font-size:.84rem;margin-bottom:4px">Estado: <b style="color:var(--lime)">conectado a tu Google Sheet</b></div>
+    <div class="muted" style="font-size:.74rem;margin-bottom:10px">Cada cambio se respalda solo. Última sync: ${lastS? new Date(lastS).toLocaleString('es-CR',{dateStyle:'short',timeStyle:'short'}) : 'nunca'}</div>
+    <button class="btn btn-lime btn-block" onclick="syncNow(true)">☁️ Sincronizar ahora</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:8px" onclick="clearSyncUrl()">Quitar sync</button>`;
+  } else {
+    html+=`<div class="muted" style="font-size:.8rem;margin-bottom:8px">Pegá la URL del script (termina en <b>/exec</b>) y tus datos se respaldan solos en tu Google Sheet — nunca más atrapados en el cel.</div>
+    <input id="syncUrlInp" type="url" placeholder="https://script.google.com/.../exec" style="width:100%">
+    <button class="btn btn-lime btn-block" style="margin-top:8px" onclick="setSyncUrl()">Conectar</button>`;
+  }
+  html+=`<div class="row" style="gap:8px;margin-top:12px">
+    <button class="btn btn-ghost btn-sm" style="flex:1" onclick="exportData()">⬇️ Exportar JSON</button>
+    <label class="btn btn-ghost btn-sm" style="flex:1;justify-content:center">⬆️ Importar JSON<input type="file" accept="application/json,.json" style="display:none" onchange="importData(event)"></label>
+  </div>
+  <div class="muted" style="font-size:.7rem;margin-top:8px">El export descarga TODO tu estado (medidas, cargas, calorías) como archivo. El import lo restaura en otro dispositivo.</div></div>`;
 
   el.innerHTML=html;
   renderZones();
