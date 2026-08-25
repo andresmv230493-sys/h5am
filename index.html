@@ -488,53 +488,59 @@ const MEALS = [
   {k:'desayuno', ic:'🍳', name:'Desayuno', hora:'6:00 - 7:00 AM',
    items:[
      {n:'Huevos', q:'3 enteros + 2 claras', cal:250, p:26, c:2, f:15},
-     {n:'Tortillas de maíz', q:'2 unidades', cal:130, p:3, c:27, f:2},
-     {n:'Aguacate', q:'¼ (50 g)', cal:80, p:1, c:4, f:7},
-     {n:'Queso blanco', q:'40 g', cal:106, p:7, c:1, f:8},
+     {n:'Tortillas de maíz', q:'2 unidades (de paquete)', cal:130, p:3, c:27, f:2},
+     {n:'Aguacate', q:'¼ — 50 g pesados', cal:80, p:1, c:4, f:7},
+     {n:'Queso blanco', q:'40 g pesados', cal:120, p:7, c:1, f:10},
      {n:'Café negro', q:'1 taza', cal:2, p:0, c:0, f:0},
    ],
    swaps:[
-     '2 tortillas = 2 galletas soda = 1 rebanada de pan integral',
-     'Queso blanco 40g = 60g si es queso fresco bajo en grasa',
+     '2 tortillas de paquete = 2 galletas soda = 1 rebanada de pan integral',
+     '⚠️ Tortilla palmeada pesa el doble que la de paquete: si es palmeada, comé 1',
+     'Queso blanco 40 g = 60 g si es tipo cottage o bajo en grasa',
    ]},
-  {k:'merienda', ic:'🍌', name:'Merienda AM', hora:'10:00 AM',
+  {k:'merienda', ic:'🍌', name:'Merienda AM', hora:'10:00 AM · o 30-45 min PRE-entreno',
    items:[
-     {n:'Banano', q:'1 mediano', cal:105, p:1, c:27, f:0},
+     {n:'Banano', q:'1 mediano (~120 g)', cal:105, p:1, c:27, f:0},
      {n:'Batido de proteína', q:'1 scoop (25 g prot) en agua', cal:120, p:25, c:3, f:2},
    ],
    swaps:[
-     '1 banano = 1 manzana = 2 mandarinas = 150g de uvas',
+     '1 banano = 1 manzana mediana = 3 mandarinas = 150 g de uvas',
+     '💡 Si entrenás en la mañana, comé el banano 30-45 min ANTES. Mismo alimento, mejor rendimiento.',
    ]},
   {k:'almuerzo', ic:'🍗', name:'Almuerzo', hora:'12:30 - 1:30 PM',
    items:[
-     {n:'Pechuga de pollo', q:'200 g ya cocida', cal:330, p:62, c:0, f:7},
-     {n:'Vegetales', q:'250 g (brócoli, zanahoria, zucchini)', cal:90, p:5, c:18, f:1},
-     {n:'Papa cocida', q:'250 g', cal:217, p:5, c:50, f:0, rest:{q:'150 g', cal:130, p:3, c:30, f:0}},
-     {n:'Aceite de oliva', q:'1 cucharada', cal:120, p:0, c:0, f:14},
+     {n:'Pechuga de pollo', q:'150 g ya cocida', cal:247, p:47, c:0, f:5},
+     {n:'Vegetales', q:'250 g (brócoli, zanahoria, zucchini)', cal:80, p:5, c:16, f:1},
+     {n:'Papa cocida', q:'350 g', cal:304, p:7, c:70, f:0, rest:{q:'200 g', cal:174, p:4, c:40, f:0}},
+     {n:'Aceite de oliva', q:'1 cucharada (14 g)', cal:126, p:0, c:0, f:14},
    ],
    swaps:[
-     '250g de papa = 150g de garbanzos cocidos = 3 tortillas',
-     '200g de pollo = 180g de carne molida magra = 200g de atún escurrido',
+     '350 g de papa = 250 g de garbanzos cocidos = 4 tortillas = 250 g de arroz cocido',
+     '150 g de pollo = 200 g de carne molida 95/5 = 150 g de atún escurrido',
+     'Tostadas: que sean horneadas, no fritas',
    ]},
   {k:'cafe', ic:'☕', name:'Merienda PM', hora:'4:00 PM',
    items:[
      {n:'Batido de proteína', q:'1 scoop (25 g prot) en agua', cal:120, p:25, c:3, f:2},
      {n:'Café negro', q:'1 taza', cal:2, p:0, c:0, f:0},
+     {n:'Manzana', q:'1 mediana', cal:95, p:0, c:25, f:0, skipRest:true},
      {n:'Galleta dulce', q:'1 unidad', cal:70, p:1, c:10, f:3, skipRest:true},
    ],
    swaps:[
-     'La galleta es solo en días de entreno. Domingo se salta.',
+     'La manzana y la galleta son solo días de entreno. Domingo se saltan.',
+     '1 manzana = 1 banano = 3 mandarinas',
    ]},
   {k:'cena', ic:'🐟', name:'Cena', hora:'7:00 - 8:00 PM',
    items:[
-     {n:'Atún en agua', q:'2 latas (160 g escurrido)', cal:186, p:42, c:0, f:1},
-     {n:'Vegetales', q:'250 g', cal:90, p:5, c:18, f:1},
-     {n:'Tortillas de maíz', q:'2 unidades', cal:130, p:3, c:27, f:2},
-     {n:'Aceite de oliva', q:'1 cucharadita', cal:40, p:0, c:0, f:5},
+     {n:'Atún en agua', q:'2 latas (≈145 g escurrido)', cal:168, p:38, c:0, f:1},
+     {n:'Vegetales', q:'250 g', cal:80, p:5, c:16, f:1},
+     {n:'Tortillas de maíz', q:'3 unidades', cal:195, p:5, c:41, f:2},
+     {n:'Aceite de oliva', q:'1 cucharadita (5 g)', cal:45, p:0, c:0, f:5},
    ],
    swaps:[
-     '2 latas de atún = 150g de pechuga de pollo = 5 claras + 1 huevo entero',
-     'Si entrenaste fuerte en la noche: subí a 3 tortillas',
+     '⚠️ Atún: MÁXIMO 3 días por semana (mercurio). El resto: pollo, salmón o sardina.',
+     '2 latas de atún = 150 g de pechuga de pollo = 5 claras + 1 huevo entero',
+     'Salmón o sardina 2-3× por semana te cubre omega-3 y vitamina D',
    ]},
 ];
 
@@ -570,10 +576,10 @@ const PHASES = [
 
 /* ---------- NUTRICIÓN CORREGIDA (déficit neto semanal) ---------- */
 const NUTRI = {
-  gym:    {cal:'~2,190', p:'212g', c:'190g', f:'68g', tipo:'Días de entreno', color:'var(--blue)', desc:'Lunes a sábado. Papa 250g en el almuerzo + galleta en la merienda PM.'},
-  cardio: {cal:'~2,190', p:'212g', c:'190g', f:'68g', tipo:'Días de entreno', color:'var(--green)', desc:'Igual que los otros días de entreno.'},
-  rest:   {cal:'~2,030', p:'209g', c:'160g', f:'65g', tipo:'Domingo (descanso)', color:'var(--text2)', desc:'Papa baja a 150g y se salta la galleta. El resto igual.'},
-  regla: 'BLOQUE PLAYA: comés lo mismo casi todos los días — así no tenés que pensar. Días de entreno ~2,190 kcal, domingo ~2,030. La proteína alta (~210g) protege el músculo mientras bajás grasa. Lo único que cambia entre días: la papa del almuerzo y la galleta de la tarde. Alcohol = le resta directo al six-pack.',
+  gym:    {cal:'~2,340', p:'196g', c:'245g', f:'70g', tipo:'Días de entreno', color:'var(--blue)', desc:'Lunes a sábado. Papa 350g + manzana y galleta en la merienda PM.'},
+  cardio: {cal:'~2,340', p:'196g', c:'245g', f:'70g', tipo:'Días de entreno', color:'var(--green)', desc:'Igual que los otros días de entreno.'},
+  rest:   {cal:'~2,045', p:'194g', c:'180g', f:'66g', tipo:'Domingo (descanso)', color:'var(--text2)', desc:'Papa baja a 200g, sin manzana ni galleta. El resto igual.'},
+  regla: 'BLOQUE PLAYA: comés casi lo mismo todos los días — así no tenés que pensar. Con 6 entrenos + 2 corridas + caminata quemás ~2,850 kcal/día, así que 2,340 es un déficit de ~500 kcal/día (moderado, no leve): ~0.5 kg de grasa por semana. Los carbos son altos a propósito: sin ellos no rendís en la semana 3-4, que es la más dura. Lo único que cambia el domingo: la papa, la manzana y la galleta.',
   dias: {1:'gym',2:'gym',3:'gym',4:'gym',5:'gym',6:'gym',7:'rest'},
 };
 
@@ -1523,7 +1529,10 @@ function renderGym(){
       <b style="color:var(--text)">Vegetales:</b> brócoli · zucchini · zanahoria — libres, comé los que querás</div></div>`;
 
     html+=`<div class="notice">🥩 Regla simple: si un día no podés seguir el plan, asegurá <b>la proteína</b> (pollo, atún, huevos o batido en cada comida). Los carbos y grasas se acomodan solos.</div>`;
-    html+=`<div class="notice">💧 3-4 litros de agua al día. Con 6 entrenos y déficit, deshidratarte te baja la fuerza antes que el hambre.</div>`;
+    html+=`<div class="notice">🧂 <b>Salá la comida sin culpa: 3-4 g de sal al día.</b> En déficit + sudor, el sodio bajo da mareo, calambres, dolor de cabeza y sensación de "sin fuerza" en la semana 2-3 — y se confunde con que el déficit está funcionando. No lo es.</div>`;
+    html+=`<div class="notice">💧 <b>3.5 - 4.5 litros de agua al día</b> + 500-750 ml extra por entreno. Deshidratado perdés fuerza antes de tener hambre.</div>`;
+    html+=`<div class="notice">⚖️ <b>Pesá solo 3 cosas la primera semana:</b> aguacate, queso y atún escurrido. Ahí es donde se esconden 200-300 kcal sin que te des cuenta (un aguacate criollo "de ¼" puede ser 100 g). El resto, a ojo.</div>`;
+    html+=`<div class="notice">🐟 <b>Atún máximo 3 días por semana.</b> 2 latas diarias por 5 semanas te pone en ~2.5× la referencia de mercurio. Rotá con pollo, salmón o sardina — de paso ganás omega-3 y vitamina D.</div>`;
     el.innerHTML=html; return;
   }
 
