@@ -484,19 +484,82 @@ const SLOTS = [
   {k:'janta',ic:'🌙', name:'Cena', desc:'Omelet c/ vegetales · ensalada+carne+arroz integral · pollo c/ puré', obj:'Ligera, sin carbo rápido, buen sueño'},
 ];
 const REGLAS = ['Toda comida lleva proteína','Evitar dulce y fritura en días de entreno','Beber 3 L de agua al día (mínimo)'];
-const MEALS_PLAN = [
-  {k:'desayuno', ic:'🌅', name:'Desayuno', items:'2 huevos + 3 claras · 40g queso blanco · 1 tortilla integral · 1 banana · café negro · ½ aguacate', cal:485, p:42, c:38, f:22},
-  {k:'merienda', ic:'🥤', name:'Merienda AM', items:'Batido proteína 25g en agua · 1 fruta', cal:220, p:28, c:25, f:2},
-  {k:'almuerzo', ic:'🍗', name:'Almuerzo', items:'150g carbohidrato (papa/camote/espaguetis) · 250g pechuga de pollo', cal:520, p:55, c:50, f:8},
-  {k:'cafe', ic:'☕', name:'Café tarde', items:'Café negro · batido proteína en agua · 1 galleta', cal:200, p:27, c:18, f:3},
-  {k:'cena', ic:'🥗', name:'Cena', items:'Verduras · 180g pechuga pollo (alt: 180g atún en agua, 250g pollo)', cal:290, p:48, c:8, f:6},
+const MEALS = [
+  {k:'desayuno', ic:'🍳', name:'Desayuno', hora:'6:00 - 7:00 AM',
+   items:[
+     {n:'Huevos', q:'3 enteros + 2 claras', cal:250, p:26, c:2, f:15},
+     {n:'Tortillas de maíz', q:'2 unidades', cal:130, p:3, c:27, f:2},
+     {n:'Aguacate', q:'¼ (50 g)', cal:80, p:1, c:4, f:7},
+     {n:'Queso blanco', q:'40 g', cal:106, p:7, c:1, f:8},
+     {n:'Café negro', q:'1 taza', cal:2, p:0, c:0, f:0},
+   ],
+   swaps:[
+     '2 tortillas = 2 galletas soda = 1 rebanada de pan integral',
+     'Queso blanco 40g = 60g si es queso fresco bajo en grasa',
+   ]},
+  {k:'merienda', ic:'🍌', name:'Merienda AM', hora:'10:00 AM',
+   items:[
+     {n:'Banano', q:'1 mediano', cal:105, p:1, c:27, f:0},
+     {n:'Batido de proteína', q:'1 scoop (25 g prot) en agua', cal:120, p:25, c:3, f:2},
+   ],
+   swaps:[
+     '1 banano = 1 manzana = 2 mandarinas = 150g de uvas',
+   ]},
+  {k:'almuerzo', ic:'🍗', name:'Almuerzo', hora:'12:30 - 1:30 PM',
+   items:[
+     {n:'Pechuga de pollo', q:'200 g ya cocida', cal:330, p:62, c:0, f:7},
+     {n:'Vegetales', q:'250 g (brócoli, zanahoria, zucchini)', cal:90, p:5, c:18, f:1},
+     {n:'Papa cocida', q:'250 g', cal:217, p:5, c:50, f:0, rest:{q:'150 g', cal:130, p:3, c:30, f:0}},
+     {n:'Aceite de oliva', q:'1 cucharada', cal:120, p:0, c:0, f:14},
+   ],
+   swaps:[
+     '250g de papa = 150g de garbanzos cocidos = 3 tortillas',
+     '200g de pollo = 180g de carne molida magra = 200g de atún escurrido',
+   ]},
+  {k:'cafe', ic:'☕', name:'Merienda PM', hora:'4:00 PM',
+   items:[
+     {n:'Batido de proteína', q:'1 scoop (25 g prot) en agua', cal:120, p:25, c:3, f:2},
+     {n:'Café negro', q:'1 taza', cal:2, p:0, c:0, f:0},
+     {n:'Galleta dulce', q:'1 unidad', cal:70, p:1, c:10, f:3, skipRest:true},
+   ],
+   swaps:[
+     'La galleta es solo en días de entreno. Domingo se salta.',
+   ]},
+  {k:'cena', ic:'🐟', name:'Cena', hora:'7:00 - 8:00 PM',
+   items:[
+     {n:'Atún en agua', q:'2 latas (160 g escurrido)', cal:186, p:42, c:0, f:1},
+     {n:'Vegetales', q:'250 g', cal:90, p:5, c:18, f:1},
+     {n:'Tortillas de maíz', q:'2 unidades', cal:130, p:3, c:27, f:2},
+     {n:'Aceite de oliva', q:'1 cucharadita', cal:40, p:0, c:0, f:5},
+   ],
+   swaps:[
+     '2 latas de atún = 150g de pechuga de pollo = 5 claras + 1 huevo entero',
+     'Si entrenaste fuerte en la noche: subí a 3 tortillas',
+   ]},
 ];
-const MEALS_BASE_CAL=1712, MEALS_BASE_P=200;
-const CARB_EXTRA={
-  gym:{extra:'+197g carbos', cal:'+~788 kcal', total:'~2,250', sugg:'+1 taza arroz (+200kcal) · +1 banana (+100kcal) · +1 camote mediano (+150kcal) · +pan integral (+138kcal) · +avena 50g (+200kcal)'},
-  cardio:{extra:'+122g carbos', cal:'+~488 kcal', total:'~2,150', sugg:'+1 taza arroz · +1 banana · +1 fruta'},
-  rest:{extra:'+97g carbos', cal:'+~388 kcal', total:'~2,050', sugg:'+½ taza arroz · +1 banana'},
-};
+
+/* Suma macros de una comida según tipo de día ('gym' o 'rest') */
+function mealMacros(meal, tipo){
+  let cal=0,p=0,c=0,f=0;
+  meal.items.forEach(it=>{
+    if(tipo==='rest' && it.skipRest) return;
+    const v = (tipo==='rest' && it.rest) ? it.rest : it;
+    cal+=v.cal||0; p+=v.p||0; c+=v.c||0; f+=v.f||0;
+  });
+  return {cal,p,c,f};
+}
+function dayMacros(tipo){
+  let cal=0,p=0,c=0,f=0;
+  MEALS.forEach(m=>{ const t=mealMacros(m,tipo); cal+=t.cal; p+=t.p; c+=t.c; f+=t.f; });
+  return {cal,p,c,f};
+}
+/* Item mostrado según tipo de día; devuelve null si se salta */
+function itemFor(it, tipo){
+  if(tipo==='rest' && it.skipRest) return null;
+  return (tipo==='rest' && it.rest) ? Object.assign({}, it, it.rest) : it;
+}
+function dayTypeToday(){ return NUTRI.dias[new Date().getDay()||7]==='rest' ? 'rest' : 'gym'; }
+
 /* ---------- FASES DE PROGRESIÓN (ciclo 7 semanas) ---------- */
 const PHASES = [
   {w:'—', name:'Adaptación', color:'var(--blue)', desc:'(No se usa en el Bloque Playa — ya venís entrenado.)', mods:'—'},
@@ -507,10 +570,10 @@ const PHASES = [
 
 /* ---------- NUTRICIÓN CORREGIDA (déficit neto semanal) ---------- */
 const NUTRI = {
-  gym:    {cal:'~2,250', p:'170g', c:'210g', f:'60g', tipo:'Déficit leve', color:'var(--blue)', desc:'Bloque Playa: déficit suave con proteína ALTA (2.3g/kg). Carbos pre y post entreno para levantar pesado.'},
-  cardio: {cal:'~2,150', p:'170g', c:'180g', f:'60g', tipo:'Déficit leve', color:'var(--green)', desc:'Proteína alta para proteger músculo. Carbos moderados.'},
-  rest:   {cal:'~2,050', p:'165g', c:'150g', f:'60g', tipo:'Déficit', color:'var(--text2)', desc:'Domingo: proteína + grasas saludables, carbos bajos. Caminata larga en ayunas opcional.'},
-  regla: 'BLOQUE PLAYA (18 ago → 24 sep): déficit leve TODOS los días + proteína 165-175g innegociable + hierro pesado = te marcás sin comerte el músculo. La caminata diaria de 45-60 min es el quemador silencioso: ~350-450 kcal sin costo de recuperación. Alcohol = le resta directo al six-pack. Meta 24-sep: abdomen ~79, cintura ~77.',
+  gym:    {cal:'~2,190', p:'212g', c:'190g', f:'68g', tipo:'Días de entreno', color:'var(--blue)', desc:'Lunes a sábado. Papa 250g en el almuerzo + galleta en la merienda PM.'},
+  cardio: {cal:'~2,190', p:'212g', c:'190g', f:'68g', tipo:'Días de entreno', color:'var(--green)', desc:'Igual que los otros días de entreno.'},
+  rest:   {cal:'~2,030', p:'209g', c:'160g', f:'65g', tipo:'Domingo (descanso)', color:'var(--text2)', desc:'Papa baja a 150g y se salta la galleta. El resto igual.'},
+  regla: 'BLOQUE PLAYA: comés lo mismo casi todos los días — así no tenés que pensar. Días de entreno ~2,190 kcal, domingo ~2,030. La proteína alta (~210g) protege el músculo mientras bajás grasa. Lo único que cambia entre días: la papa del almuerzo y la galleta de la tarde. Alcohol = le resta directo al six-pack.',
   dias: {1:'gym',2:'gym',3:'gym',4:'gym',5:'gym',6:'gym',7:'rest'},
 };
 
@@ -800,11 +863,30 @@ function habit(iso){
 }
 // Día actual del desafío (1-7) según startDate; null si no inició
 function currentDay(){
+  // La semana ROTA (1-7) durante todo el bloque: nunca se "acaba" el plan.
   if(!S.startDate) return null;
   const d0 = new Date(S.startDate+'T00:00:00');
   const dn = new Date(todayISO()+'T00:00:00');
-  const diff = Math.floor((dn-d0)/86400000)+1;
-  return diff;
+  const diff = Math.floor((dn-d0)/86400000);
+  if(diff < 0) return null;
+  return (diff % 7) + 1;
+}
+function weekNumberSinceStart(){
+  if(!S.startDate) return 1;
+  const d0 = new Date(S.startDate+'T00:00:00');
+  const dn = new Date(todayISO()+'T00:00:00');
+  return Math.floor(Math.max(0,(dn-d0)/86400000)/7)+1;
+}
+function autoRollWeek(){
+  // Al entrar en una semana nueva, las sesiones se marcan pendientes solas.
+  if(!S.startDate) return;
+  const w = weekNumberSinceStart();
+  if(S._weekIdx == null){ S._weekIdx = w; save(); return; }
+  if(w > S._weekIdx){
+    S._weekIdx = w;
+    SESSIONS.forEach(se=>{ S.sessions[se.id] = {done:false, day:se.dayDef}; });
+    save();
+  }
 }
 function clampDay(d){ return Math.max(1,Math.min(7,d)); }
 
@@ -849,8 +931,7 @@ function updateHeaderInfo(){
   const el=document.getElementById('headerInfo'); if(!el) return;
   const dow=new Date().getDay()||7;
   const dayNames={1:'Espalda1',2:'Piernas',3:'Pecho',4:'Espalda2',5:'Glúteos',6:'Brazos',7:'Descanso'};
-  const dayType=NUTRI.dias[dow];
-  const calTarget=dayType==='gym'?'2,250':dayType==='cardio'?'2,150':'2,050';
+  const calTarget=dayMacros(dayTypeToday()).cal;
   const burnT=burnTarget(todayISO());
   const w=getActiveWeek();
   const ph=getPhaseForWeek(w);
@@ -911,9 +992,6 @@ function renderHoy(){
       </div>
       <div class="notice" style="margin-top:6px">💡 Consejo: antes de iniciar cualquier rutina, hazte un chequeo médico. Esta planilla es informativa (Time Híbrido · CREF-SC 025279).</div>`;
     return;
-  }
-  if(cd>7){
-    renderFinish(el); return;
   }
   const plan = PLAN[cd-1];
   const iso = todayISO();
@@ -998,20 +1076,78 @@ function renderHoy(){
     </div>
     <div class="muted" style="font-size:.68rem;margin-top:7px">Cardio = corrida o caminata. Los números grises con ᵗ son registros viejos en modo "total del día" (junio) — otra métrica, no comparables.</div></div>`;
 
-  // COMIDAS (simplified in Hoy view)
-  const dayType2=NUTRI.dias[new Date().getDay()||7];
-  const ce2=CARB_EXTRA[dayType2];
+  // COMIDAS — plan real, expandible
+  const tipoDia = dayTypeToday();
+  const dTot = dayMacros(tipoDia);
   if(!S.habits[iso]) S.habits[iso]={meals:{}};
   const hm2=S.habits[iso].meals||{};
-  html += `<div class="section-h">🍽️ Comidas de hoy · Meta ${ce2.total} kcal</div><div class="card pad0" style="padding:13px">`;
-  MEALS_PLAN.forEach(m=>{
+  const comidas=MEALS.filter(m=>m.k).length;
+  const hechas=MEALS.filter(m=>hm2[m.k]).length;
+  let calHechas=0, pHechas=0;
+  MEALS.forEach(m=>{ if(hm2[m.k]){ const t=mealMacros(m,tipoDia); calHechas+=t.cal; pHechas+=t.p; } });
+
+  html += `<div class="section-h">🍽️ Qué como hoy · ${tipoDia==='rest'?'Domingo (descanso)':'Día de entreno'}</div>
+    <div class="card">
+      <div class="row between" style="margin-bottom:8px">
+        <div><div style="font-weight:800;font-size:1.15rem;color:var(--lime)">${dTot.cal} kcal</div>
+        <div class="muted" style="font-size:.72rem">meta de hoy</div></div>
+        <div style="text-align:right"><div style="font-weight:700;font-size:.9rem">${calHechas} kcal · ${pHechas}g prot</div>
+        <div class="muted" style="font-size:.72rem">llevás ${hechas}/${comidas} comidas</div></div>
+      </div>
+      <div class="bar" style="height:8px;margin-bottom:6px"><i style="width:${Math.min(100,Math.round(calHechas/dTot.cal*100))}%"></i></div>
+      <div class="macros" style="margin:10px 0 2px"><div class="macro"><b>${dTot.p}g</b><span>Proteína</span></div>
+        <div class="macro"><b>${dTot.c}g</b><span>Carbos</span></div><div class="macro"><b>${dTot.f}g</b><span>Grasa</span></div></div>
+    </div>`;
+
+  html += `<div class="card pad0" style="padding:6px 13px 13px">`;
+  MEALS.forEach(m=>{
     const on=!!hm2[m.k];
-    html+=`<div class="row" style="padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;${on?'opacity:.6':''}" onclick="toggleMealNew('${m.k}')">
-      <div class="chk ${on?'on':''}"></div>
-      <span style="font-size:1.1rem">${m.ic}</span>
-      <div style="flex:1;font-size:.85rem"><b>${m.name}</b> <span class="muted">${m.cal} kcal</span></div></div>`;
+    const t=mealMacros(m,tipoDia);
+    const open=!!_mealOpen[m.k];
+    html+=`<div style="border-bottom:1px solid var(--border);padding:11px 0">
+      <div class="row" style="gap:9px">
+        <div class="chk ${on?'on':''}" onclick="event.stopPropagation();toggleMealNew('${m.k}')" style="flex-shrink:0"></div>
+        <div style="flex:1;cursor:pointer;${on?'opacity:.55':''}" onclick="toggleMealOpen('${m.k}')">
+          <div class="row between">
+            <div><span style="font-size:1.05rem;margin-right:5px">${m.ic}</span><b style="font-size:.9rem">${m.name}</b>
+              <span class="muted" style="font-size:.72rem;margin-left:5px">${m.hora}</span></div>
+            <div style="text-align:right;flex-shrink:0">
+              <span style="color:var(--lime);font-weight:700;font-size:.85rem">${t.cal}</span>
+              <span class="muted" style="font-size:.72rem"> kcal</span>
+              <span style="color:var(--text2);font-size:.75rem;margin-left:6px">${open?'▲':'▼'}</span></div>
+          </div>
+          <div class="muted" style="font-size:.72rem;margin-top:2px">${t.p}g prot · ${t.c}g carb · ${t.f}g grasa</div>
+        </div>
+      </div>`;
+    if(open){
+      html+=`<div style="margin-top:10px;background:var(--bg2);border-radius:10px;padding:10px">
+        <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+          <tr style="color:var(--text3);font-size:.68rem;text-transform:uppercase;letter-spacing:.04em">
+            <th style="text-align:left;padding-bottom:5px">Alimento</th><th style="text-align:right">kcal</th>
+            <th style="text-align:right">P</th><th style="text-align:right">C</th><th style="text-align:right">G</th></tr>`;
+      m.items.forEach(raw=>{
+        const it=itemFor(raw,tipoDia); if(!it) return;
+        html+=`<tr style="border-top:1px solid var(--border)">
+          <td style="padding:6px 0"><b style="font-weight:600">${it.n}</b><br><span class="muted" style="font-size:.72rem">${it.q}</span></td>
+          <td style="text-align:right;color:var(--lime);font-weight:600">${it.cal}</td>
+          <td style="text-align:right">${it.p}</td><td style="text-align:right">${it.c}</td><td style="text-align:right">${it.f}</td></tr>`;
+      });
+      html+=`<tr style="border-top:2px solid var(--border)"><td style="padding-top:7px"><b>Total</b></td>
+        <td style="text-align:right;color:var(--lime);font-weight:800;padding-top:7px">${t.cal}</td>
+        <td style="text-align:right;font-weight:700;padding-top:7px">${t.p}</td>
+        <td style="text-align:right;font-weight:700;padding-top:7px">${t.c}</td>
+        <td style="text-align:right;font-weight:700;padding-top:7px">${t.f}</td></tr></table>`;
+      if(m.swaps&&m.swaps.length){
+        html+=`<div style="margin-top:9px;padding-top:8px;border-top:1px dashed var(--border)">
+          <div style="font-size:.72rem;color:var(--aqua);font-weight:700;margin-bottom:3px">🔄 Si no tenés algo:</div>`;
+        m.swaps.forEach(sw=> html+=`<div class="muted" style="font-size:.74rem;line-height:1.5">· ${sw}</div>`);
+        html+=`</div>`;
+      }
+      html+=`</div>`;
+    }
+    html+=`</div>`;
   });
-  html += `<div style="text-align:right;margin-top:8px"><span class="timerbtn" onclick="gymOpen='NUTRI';go('gym')">Ver detalle + recetas →</span></div></div>`;
+  html += `<div style="text-align:right;margin-top:10px"><span class="timerbtn" onclick="gymOpen='NUTRI';go('gym')">Ver plan completo →</span></div></div>`;
 
   // FOTO DEL DÍA
   const todayPhoto = S.photos ? S.photos.find(p=>p.date===todayISO()) : null;
@@ -1330,22 +1466,64 @@ function renderGym(){
 
   // Nutrition view
   if(gymOpen==='NUTRI'){
-    html+=`<div class="card card-accent"><div style="font-weight:800;font-size:1.05rem">Estrategia Nutricional Corregida</div>
+    const tipo = _nutriDia || dayTypeToday();
+    const tot = dayMacros(tipo);
+    html+=`<div class="card card-accent"><div style="font-weight:800;font-size:1.05rem">Mi plan de comidas</div>
       <div class="muted" style="margin-top:6px;font-size:.84rem;line-height:1.55">${NUTRI.regla}</div></div>`;
-    const dayNames=['','Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-    const dayLabels=['','Espalda1+Run','Piernas','Pecho','Espalda2','Glúteos','Brazos+Run','Descanso'];
-    for(let d=1;d<=7;d++){
-      const tipo=NUTRI.dias[d]; const n=NUTRI[tipo];
-      html+=`<div class="card" style="padding:12px"><div class="row between"><div><b style="font-size:.9rem">${dayNames[d]} — ${dayLabels[d]}</b>
-        <span class="pill" style="background:rgba(194,249,79,.12);color:var(--lime);margin-left:8px">${n.tipo}</span></div>
-        <b style="color:${n.color};font-size:.9rem">${n.cal} kcal</b></div>
-        <div class="macros" style="margin:8px 0 4px"><div class="macro"><b>${n.p}</b><span>Proteína</span></div>
-        <div class="macro"><b>${n.c}</b><span>Carbos</span></div><div class="macro"><b>${n.f}</b><span>Grasa</span></div></div>
-        <div class="muted" style="font-size:.78rem">${n.desc}</div></div>`;
-    }
-    html+=`<div class="card" style="background:rgba(78,217,138,.06);border-color:rgba(78,217,138,.2)"><b style="color:var(--green);font-size:.88rem">Déficit neto semanal</b>
-      <div class="muted" style="margin-top:4px;font-size:.84rem">Gym (4d) a mantenimiento + Cardio (2d) en déficit + Descanso (1d) en déficit = <b style="color:var(--lime)">~1,400-2,100 kcal/semana de déficit</b> → pierdes grasa sin perder músculo.</div></div>`;
-    html+=`<div class="notice">🥩 Regla #1: proteína en CADA comida (mín 30g). 160g/día es el piso. Sin proteína suficiente, el déficit come músculo en vez de grasa.</div>`;
+
+    // Selector día entreno / descanso
+    html+=`<div class="row" style="gap:8px;margin-bottom:12px">
+      <button class="btn ${tipo==='gym'?'btn-lime':'btn-ghost'} btn-sm" style="flex:1" onclick="_nutriDia='gym';renderGym()">Día de entreno</button>
+      <button class="btn ${tipo==='rest'?'btn-lime':'btn-ghost'} btn-sm" style="flex:1" onclick="_nutriDia='rest';renderGym()">Domingo (descanso)</button>
+    </div>`;
+
+    // Totales del día
+    html+=`<div class="card" style="text-align:center">
+      <div style="font-weight:800;font-size:1.7rem;color:var(--lime)">${tot.cal} kcal</div>
+      <div class="muted" style="font-size:.76rem;margin-bottom:9px">${tipo==='gym'?'Lunes a sábado':'Solo domingo'}</div>
+      <div class="macros"><div class="macro"><b>${tot.p}g</b><span>Proteína</span></div>
+        <div class="macro"><b>${tot.c}g</b><span>Carbos</span></div><div class="macro"><b>${tot.f}g</b><span>Grasa</span></div></div></div>`;
+
+    // Cada comida con su tabla
+    MEALS.forEach(m=>{
+      const t=mealMacros(m,tipo);
+      html+=`<div class="section-h">${m.ic} ${m.name} · ${m.hora}</div>
+        <div class="card" style="padding:12px">
+        <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+          <tr style="color:var(--text3);font-size:.68rem;text-transform:uppercase;letter-spacing:.04em">
+            <th style="text-align:left;padding-bottom:5px">Alimento</th><th style="text-align:right">kcal</th>
+            <th style="text-align:right">P</th><th style="text-align:right">C</th><th style="text-align:right">G</th></tr>`;
+      m.items.forEach(raw=>{
+        const it=itemFor(raw,tipo); if(!it) return;
+        html+=`<tr style="border-top:1px solid var(--border)">
+          <td style="padding:7px 0"><b style="font-weight:600">${it.n}</b><br><span class="muted" style="font-size:.74rem">${it.q}</span></td>
+          <td style="text-align:right;color:var(--lime);font-weight:600">${it.cal}</td>
+          <td style="text-align:right">${it.p}</td><td style="text-align:right">${it.c}</td><td style="text-align:right">${it.f}</td></tr>`;
+      });
+      html+=`<tr style="border-top:2px solid var(--border)"><td style="padding-top:8px"><b>Total</b></td>
+        <td style="text-align:right;color:var(--lime);font-weight:800;padding-top:8px">${t.cal}</td>
+        <td style="text-align:right;font-weight:700;padding-top:8px">${t.p}</td>
+        <td style="text-align:right;font-weight:700;padding-top:8px">${t.c}</td>
+        <td style="text-align:right;font-weight:700;padding-top:8px">${t.f}</td></tr></table>`;
+      if(m.swaps&&m.swaps.length){
+        html+=`<div style="margin-top:10px;padding-top:9px;border-top:1px dashed var(--border)">
+          <div style="font-size:.74rem;color:var(--aqua);font-weight:700;margin-bottom:4px">🔄 Cambios equivalentes</div>`;
+        m.swaps.forEach(sw=> html+=`<div class="muted" style="font-size:.78rem;line-height:1.55">· ${sw}</div>`);
+        html+=`</div>`;
+      }
+      html+=`</div>`;
+    });
+
+    // Despensa
+    html+=`<div class="section-h">🛒 Mi despensa</div><div class="card">
+      <div class="muted" style="font-size:.82rem;line-height:1.7">
+      <b style="color:var(--text)">Proteínas:</b> pechuga de pollo · atún en agua · huevos · carne molida magra · whey<br>
+      <b style="color:var(--text)">Carbos:</b> tortillas de maíz · papa · garbanzos · tostadas de pan · banano, manzana, mandarina, uvas<br>
+      <b style="color:var(--text)">Grasas:</b> aguacate · aceite de oliva · queso blanco<br>
+      <b style="color:var(--text)">Vegetales:</b> brócoli · zucchini · zanahoria — libres, comé los que querás</div></div>`;
+
+    html+=`<div class="notice">🥩 Regla simple: si un día no podés seguir el plan, asegurá <b>la proteína</b> (pollo, atún, huevos o batido en cada comida). Los carbos y grasas se acomodan solos.</div>`;
+    html+=`<div class="notice">💧 3-4 litros de agua al día. Con 6 entrenos y déficit, deshidratarte te baja la fuerza antes que el hambre.</div>`;
     el.innerHTML=html; return;
   }
 
@@ -1781,6 +1959,9 @@ function toggleRitual(period,i){
   const idx=arr.indexOf(i); if(idx>=0)arr.splice(idx,1); else arr.push(i);
   save(); renderHoy();
 }
+let _mealOpen={};
+let _nutriDia=null;
+function toggleMealOpen(k){ _mealOpen[k]=!_mealOpen[k]; renderHoy(); }
 function toggleMealNew(k){
   const iso=todayISO();
   if(!S.habits[iso]) S.habits[iso]={meals:{}};
@@ -2029,6 +2210,7 @@ function showPhotoCarousel(){
 /* =================================================================
    NAV
    ================================================================= */
+function bootRollCheck(){ try{ autoRollWeek(); }catch(e){} }
 function go(v){
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   document.getElementById('v-'+v).classList.add('active');
@@ -2040,6 +2222,7 @@ function go(v){
 document.querySelectorAll('nav button').forEach(b=> b.onclick=()=>go(b.dataset.v));
 
 function renderAll(){
+  autoRollWeek();
   updateStreakDisplay();
   document.getElementById('levelN').textContent=S.level||1;
   updateHeaderInfo();
