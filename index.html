@@ -684,7 +684,7 @@ function setCalEx(k,v){
    SYNC & BACKUP — Google Sheet vía Apps Script
    La URL del script vive SOLO en localStorage (nunca en el repo).
    ================================================================= */
-const SYNC_URL_KEY='h5am_sync_url', SYNC_TS_KEY='h5am_last_sync';
+const SYNC_URL_KEY='h5am_sync_url', SYNC_TS_KEY='h5am_last_sync', SYNC_ERR_KEY='h5am_sync_err';
 function syncUrl(){ return localStorage.getItem(SYNC_URL_KEY)||''; }
 let _syncT=null;
 function scheduleSync(){ if(!syncUrl()) return; clearTimeout(_syncT); _syncT=setTimeout(()=>syncNow(false),4000); }
@@ -697,18 +697,40 @@ async function syncNow(manual){
   const url=syncUrl();
   if(!url){ if(manual) toast('Configurá primero la URL de sync'); return; }
   if(!navigator.onLine){ if(manual) toast('Sin conexión — intentá luego'); return; }
-  try{
-    await fetch(url,{method:'POST',mode:'no-cors',body:syncPayload()});
+  const payload=syncPayload();
+  const okDone=(j)=>{
     localStorage.setItem(SYNC_TS_KEY,new Date().toISOString());
-    if(manual){ toast('☁️ Datos sincronizados'); renderTools(); }
-  }catch(e){ if(manual) toast('Error de sync — revisá la URL'); }
+    localStorage.removeItem(SYNC_ERR_KEY);
+    if(manual){ toast('☁️ Guardado ✓ '+((j&&j.medidas!=null)?j.medidas+' medidas':'')); renderTools(); }
+  };
+  const failed=(msg)=>{
+    localStorage.setItem(SYNC_ERR_KEY,String(msg).slice(0,120));
+    if(manual){ toast('⚠️ '+String(msg).slice(0,60)); renderTools(); }
+  };
+  try{
+    // CORS real: así SÍ podemos leer si el servidor guardó o no
+    const r=await fetch(url,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
+    let j=null; try{ j=await r.json(); }catch(e){}
+    if(j&&j.ok===true){ okDone(j); return; }
+    if(j&&j.ok===false){ failed('El servidor rechazó: '+(j.error||'error')); return; }
+    failed('Respuesta inesperada (HTTP '+r.status+')');
+  }catch(e){
+    // Si el navegador bloquea CORS, mandamos a ciegas pero lo decimos claro
+    try{
+      await fetch(url,{method:'POST',mode:'no-cors',body:payload});
+      localStorage.setItem(SYNC_TS_KEY,new Date().toISOString());
+      localStorage.setItem(SYNC_ERR_KEY,'Enviado SIN confirmación del servidor — verificalo antes de confiar');
+      if(manual){ toast('Enviado, pero sin confirmación'); renderTools(); }
+    }catch(e2){ failed('No se pudo enviar: '+(e2.message||e2)); }
+  }
 }
 function setSyncUrl(){
   const inp=document.getElementById('syncUrlInp'); const v=((inp&&inp.value)||'').trim();
   if(!v.startsWith('https://script.google.com/')){ toast('Pegá la URL /exec de Apps Script'); return; }
   localStorage.setItem(SYNC_URL_KEY,v); toast('Sync configurado ✓'); syncNow(true); renderTools();
 }
-function clearSyncUrl(){ if(confirm('¿Quitar la configuración de sync en este dispositivo?')){ localStorage.removeItem(SYNC_URL_KEY); renderTools(); } }
+function clearSyncUrl(){ if(confirm('¿Quitar la configuración de sync en este dispositivo?')){ localStorage.removeItem(SYNC_URL_KEY); localStorage.removeItem(SYNC_ERR_KEY); renderTools(); } }
 function exportData(){
   const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
@@ -731,7 +753,7 @@ function importData(ev){
 (function(){
   if(!syncUrl()) return;
   const last=localStorage.getItem(SYNC_TS_KEY);
-  if(!last || (Date.now()-new Date(last).getTime())>6*3600e3) setTimeout(()=>syncNow(false),2500);
+  setTimeout(()=>syncNow(false),2500);   // en cada apertura, no cada 6h
 })();
 
 /* ---------- WEEK / PHASE HELPERS ---------- */
@@ -1850,9 +1872,15 @@ function renderTools(){
   const su=syncUrl(), lastS=localStorage.getItem(SYNC_TS_KEY);
   html+=`<div class="section-h">☁️ Sync & Backup</div><div class="card">`;
   if(su){
-    html+=`<div style="font-size:.84rem;margin-bottom:4px">Estado: <b style="color:var(--lime)">conectado a tu Google Sheet</b></div>
-    <div class="muted" style="font-size:.74rem;margin-bottom:10px">Cada cambio se respalda solo. Última sync: ${lastS? new Date(lastS).toLocaleString('es-CR',{dateStyle:'short',timeStyle:'short'}) : 'nunca'}</div>
-    <button class="btn btn-lime btn-block" onclick="syncNow(true)">☁️ Sincronizar ahora</button>
+    const errS=localStorage.getItem(SYNC_ERR_KEY);
+    const dias=lastS? Math.floor((Date.now()-new Date(lastS).getTime())/86400000) : null;
+    const col = errS? 'var(--orange)' : (dias===null||dias>7)? 'var(--orange)' : dias>2? '#e8c94a' : 'var(--lime)';
+    const txt = dias===null? 'nunca se ha sincronizado' : dias===0? 'hoy' : dias===1? 'ayer' : 'hace '+dias+' días';
+    html+=`<div style="font-size:.84rem;margin-bottom:4px">Última sync: <b style="color:${col}">${txt}</b>${lastS?` · ${new Date(lastS).toLocaleString('es-CR',{dateStyle:'short',timeStyle:'short'})}`:''}</div>`;
+    if(errS) html+=`<div style="font-size:.76rem;color:var(--orange);background:rgba(255,138,76,.08);border:1px solid rgba(255,138,76,.25);border-radius:9px;padding:8px;margin-bottom:9px">⚠️ ${errS}</div>`;
+    else if(dias!==null&&dias>2) html+=`<div class="muted" style="font-size:.74rem;margin-bottom:9px">Hace rato que no sube nada. Tocá sincronizar.</div>`;
+    else html+=`<div class="muted" style="font-size:.74rem;margin-bottom:10px">Cada cambio se respalda solo.</div>`;
+    html+=`<button class="btn btn-lime btn-block" onclick="syncNow(true)">☁️ Sincronizar ahora</button>
     <button class="btn btn-ghost btn-block" style="margin-top:8px" onclick="clearSyncUrl()">Quitar sync</button>`;
   } else {
     html+=`<div class="muted" style="font-size:.8rem;margin-bottom:8px">Pegá la URL del script (termina en <b>/exec</b>) y tus datos se respaldan solos en tu Google Sheet — nunca más atrapados en el cel.</div>
