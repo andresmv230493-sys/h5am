@@ -1748,8 +1748,8 @@ const METRICS=[
   {k:'hombros', ic:'🦅', label:'Hombros', unit:'cm', rev:false, target:120},
   {k:'pecho', ic:'👕', label:'Pecho', unit:'cm', rev:false, target:104},
   {k:'espalda', ic:'🔙', label:'Espalda', unit:'cm', rev:false, target:46},
-  {k:'biceps_r', ic:'💪', label:'Brazo D', unit:'cm', rev:false, target:40},
-  {k:'biceps_l', ic:'💪', label:'Brazo I', unit:'cm', rev:false, target:40},
+  {k:'biceps_r', ic:'💪', label:'Brazo D (flex)', unit:'cm', rev:false, target:40},
+  {k:'biceps_l', ic:'💪', label:'Brazo I (flex)', unit:'cm', rev:false, target:40},
   {k:'cintura', ic:'📏', label:'Cintura', unit:'cm', rev:true, target:77},
   {k:'abdomen', ic:'🎯', label:'Abdomen', unit:'cm', rev:true, target:78},
   {k:'gluteo', ic:'🍑', label:'Glúteo', unit:'cm', rev:false, target:98},
@@ -1799,6 +1799,7 @@ function renderMedidas(){
   } else {
     html+=`<div class="muted" style="font-size:.8rem;text-align:center;padding:14px 6px">Todavía no hay imagen de referencia.</div>`;
   }
+  html+=`<div class="notice" style="margin:0 0 12px">💪 <b>Meta de brazo = 40 cm FLEXIONADO.</b> Tus registros hasta el 31-ago (37/37.5) son con el brazo <b>relajado</b>, así que no son comparables. Desde la próxima medición tomá el brazo contraído, en el pico.</div>`;
   const yaHombros = latest && latest.m.hombros!=null;
   if(!yaHombros){
     html+=`<div style="margin-top:11px;padding:9px;background:rgba(255,138,76,.08);border:1px solid rgba(255,138,76,.25);border-radius:9px;font-size:.76rem;color:var(--orange);line-height:1.5">
