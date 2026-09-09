@@ -1746,17 +1746,17 @@ function startRest(restStr){
 const METRICS=[
   {k:'peso', ic:'⚖️', label:'Peso', unit:'kg', rev:null, target:null},
   {k:'hombros', ic:'🦅', label:'Hombros', unit:'cm', rev:false, target:120},
-  {k:'pecho', ic:'👕', label:'Pecho', unit:'cm', rev:false, target:104},
+  {k:'pecho', ic:'👕', label:'Pecho', unit:'cm', rev:false, target:105},
   {k:'espalda', ic:'🔙', label:'Espalda', unit:'cm', rev:false, target:46},
   {k:'biceps_r', ic:'💪', label:'Brazo D (flex)', unit:'cm', rev:false, target:40},
   {k:'biceps_l', ic:'💪', label:'Brazo I (flex)', unit:'cm', rev:false, target:40},
-  {k:'cintura', ic:'📏', label:'Cintura', unit:'cm', rev:true, target:77},
-  {k:'abdomen', ic:'🎯', label:'Abdomen', unit:'cm', rev:true, target:78},
+  {k:'cintura', ic:'📏', label:'Cintura', unit:'cm', rev:true, target:74},
+  {k:'abdomen', ic:'🎯', label:'Abdomen', unit:'cm', rev:true, target:77},
   {k:'gluteo', ic:'🍑', label:'Glúteo', unit:'cm', rev:false, target:98},
   {k:'muslo_r', ic:'🦵', label:'Pierna D', unit:'cm', rev:false, target:60},
   {k:'muslo_l', ic:'🦵', label:'Pierna I', unit:'cm', rev:false, target:60},
-  {k:'panto_r', ic:'🦶', label:'Pantor. D', unit:'cm', rev:false, target:37},
-  {k:'panto_l', ic:'🦶', label:'Pantor. I', unit:'cm', rev:false, target:37},
+  {k:'panto_r', ic:'🦶', label:'Pantor. D', unit:'cm', rev:false, target:38},
+  {k:'panto_l', ic:'🦶', label:'Pantor. I', unit:'cm', rev:false, target:38},
   {k:'cuello', ic:'🧣', label:'Cuello', unit:'cm', rev:null, target:null},
 ];
 const OBJETIVO_IMGS=['objetivo-1.jpg','objetivo-2.jpg','objetivo-3.jpg','objetivo-4.jpg'];
@@ -1774,6 +1774,92 @@ function subirObjetivo(ev){
   r.onload=()=>{ if(!S.objetivoImgs) S.objetivoImgs=[]; S.objetivoImgs.push(r.result); save(); renderMedidas(); toast('Referencia agregada'); };
   r.readAsDataURL(f);
 }
+
+/* =================================================================
+   GUÍA DE MEDICIÓN — diagramas SVG con la cinta en su sitio exacto
+   ================================================================= */
+const GUIA=[
+  {k:'hombros', ic:'🦅', t:'Hombros', band:[26,94,47], arm:null,
+   pasos:['Sin camisa, de pie, descalzo, brazos colgando muertos a los lados.','El punto es lo <b>más ancho de los deltoides</b>: 2-4 cm por debajo del hueso del hombro. Marcá los dos lados con lapicero y sacale foto — esa foto es tu referencia para siempre.','Armá un aro con la cinta de ~125 cm antes de ponértelo, y metételo por la cabeza. Así lo hacés solo.','Ajustá tirando de la punta por adelante, viéndote en el espejo. La cinta apoya sobre el músculo <b>sin hundirlo</b>.','Leé al final de una exhalación normal, sin mirar hacia abajo.'],
+   err:'Cinta inclinada (más alta por atrás) = +3-4 cm falsos. Es el error #1. Chequeá de perfil en el espejo.'},
+  {k:'pecho', ic:'👕', t:'Pecho', band:[28,92,62], arm:null,
+   pasos:['De pie, brazos abajo y relajados.','Cinta horizontal alrededor del torso, a la <b>altura de los pezones</b>, pasando por debajo de las axilas.','Brazos relajados a los lados mientras leés (no los levantes para leer).','Al final de una exhalación normal.'],
+   err:'Inflar el pecho o inhalar. Medís aire, no músculo. Da +3 cm que no existen.'},
+  {k:'espalda', ic:'🔙', t:'Espalda', band:[28,92,68], arm:null,
+   pasos:['Mismo protocolo que el pecho pero <b>justo debajo de las axilas</b>, más arriba que la línea de los pezones.','Cinta horizontal, brazos abajo y relajados.','Captura el ancho del dorsal más el espesor del torso.'],
+   err:'Apretar el dorsal o abrir los brazos. Tiene que estar todo relajado.'},
+  {k:'brazo', ic:'💪', t:'Brazo (flexionado)', band:null, arm:'flex',
+   pasos:['Brazo levantado y <b>contraído a tope</b>, codo a ~90°, puño cerrado.','Cinta en el <b>punto más alto del bíceps</b>, perpendicular al hueso del brazo (no inclinada).','La cinta apoya sin hundir el músculo.','Medí los dos brazos: casi siempre uno es más grande.'],
+   err:'⚠️ Tus registros viejos (37 / 37.5) son con el brazo RELAJADO. Desde ahora medí contraído — no son comparables entre sí.'},
+  {k:'cintura', ic:'📏', t:'Cintura', band:[40,80,92], arm:null,
+   pasos:['En ayunas, en la mañana, después del baño.','Cinta en el <b>punto más estrecho</b> del torso, normalmente 2-3 cm arriba del ombligo.','De pie, relajado, brazos a los lados.','<b>Exhalá y medí al final</b>, sin meter la panza.'],
+   err:'Meter la panza. Te da un número lindo que no sirve para comparar nada. Relajá el abdomen.'},
+  {k:'abdomen', ic:'🎯', t:'Abdomen', band:[38,82,102], arm:null,
+   pasos:['Cinta horizontal <b>justo a la altura del ombligo</b>.','De pie, relajado, al final de una exhalación normal.','Esta medida más el cuello y tu estatura dan tu % de grasa por fórmula Navy.'],
+   err:'Confundirla con la cintura. Son dos medidas distintas, a dos alturas distintas: cintura arriba, abdomen en el ombligo.'},
+  {k:'gluteo', ic:'🍑', t:'Glúteo', band:[34,86,118], arm:null,
+   pasos:['De pie, pies juntos, peso repartido en las dos piernas.','Cinta en el <b>punto más ancho</b> de los glúteos, horizontal.','Chequeá de perfil en el espejo que la cinta esté nivelada.'],
+   err:'Apretar los glúteos. Relajado siempre.'},
+  {k:'muslo', ic:'🦵', t:'Muslo', band:[38,58,145], arm:null,
+   pasos:['De pie, peso repartido en las dos piernas, músculo relajado.','Cinta en el <b>punto más ancho</b>, justo debajo del pliegue del glúteo.','Marcá a cuántos cm del pliegue lo tomaste y repetí siempre igual.','Los dos muslos por separado.'],
+   err:'Cargar el peso en la pierna que estás midiendo: la contrae y da +1-2 cm.'},
+  {k:'pantorrilla', ic:'🦶', t:'Pantorrilla', band:[40,56,190], arm:null,
+   pasos:['De pie, peso repartido en las dos piernas, talones en el piso.','Cinta en el <b>punto más ancho</b> del gemelo, horizontal.','Relajada, no de puntillas.','Las dos por separado.'],
+   err:'Medir de puntillas o contrayendo. Da +2 cm falsos.'},
+  {k:'cuello', ic:'🧣', t:'Cuello', band:[52,68,38], arm:null,
+   pasos:['Cinta horizontal <b>justo debajo de la nuez</b>.','Hombros relajados, mirando al frente.','Cinta apoyada sin apretar.'],
+   err:'No es meta de tamaño: sirve para calcular tu % de grasa junto al abdomen y tu estatura.'},
+];
+
+function figuraSVG(band, arm){
+  const T='#2a3550', M='var(--lime)';
+  const cuerpo=`
+    <circle cx="60" cy="20" r="13" fill="${T}"/>
+    <path d="M54,31 h12 v7 h-12 z" fill="${T}"/>
+    <path d="M50,37 L34,44 C33,55 34,58 35,64 L37,84 L43,94 L41,112 L79,112 L77,94 L83,84 L85,64 C86,58 87,55 86,44 L70,37 Z" fill="${T}"/>
+    <path d="M34,45 L27,70 L24,104 L30,105 L34,72 L39,50 Z" fill="${T}"/>
+    <path d="M86,45 L93,70 L96,104 L90,105 L86,72 L81,50 Z" fill="${T}"/>
+    <path d="M43,112 L40,152 L41,205 L49,205 L50,152 L57,112 Z" fill="${T}"/>
+    <path d="M77,112 L80,152 L79,205 L71,205 L70,152 L63,112 Z" fill="${T}"/>`;
+  let marca='';
+  if(band){ const [x1,x2,y]=band;
+    marca=`<rect x="${x1-3}" y="${y-3.5}" width="${x2-x1+6}" height="7" rx="3.5" fill="${M}" opacity=".92"/>
+      <path d="M${x1-9},${y} h5 M${x2+4},${y} h5" stroke="${M}" stroke-width="1.6" stroke-linecap="round"/>`; }
+  if(arm==='flex'){
+    return `<svg viewBox="0 0 120 220" style="height:150px;flex-shrink:0">
+      <circle cx="60" cy="20" r="13" fill="${T}"/><path d="M54,31 h12 v7 h-12 z" fill="${T}"/>
+      <path d="M50,37 L34,44 C33,55 34,58 35,64 L37,84 L43,94 L41,112 L79,112 L77,94 L83,84 L85,64 C86,58 87,55 86,44 L70,37 Z" fill="${T}"/>
+      <path d="M34,46 C22,52 18,66 22,78 C26,88 38,90 44,82 L36,74 C33,68 34,58 40,54 Z" fill="${T}"/>
+      <path d="M44,82 C50,74 50,62 44,54 L36,58 C40,64 40,72 36,76 Z" fill="${T}"/>
+      <path d="M86,45 L93,70 L96,104 L90,105 L86,72 L81,50 Z" fill="${T}"/>
+      <path d="M43,112 L40,152 L41,205 L49,205 L50,152 L57,112 Z" fill="${T}"/>
+      <path d="M77,112 L80,152 L79,205 L71,205 L70,152 L63,112 Z" fill="${T}"/>
+      <rect x="17" y="60" width="16" height="6.5" rx="3.2" fill="${M}" opacity=".92" transform="rotate(-14 25 63)"/>
+      <path d="M10,66 h5" stroke="${M}" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+  }
+  return `<svg viewBox="0 0 120 220" style="height:150px;flex-shrink:0">${cuerpo}${marca}</svg>`;
+}
+
+function renderGuiaMedicion(){
+  let h=`<div class="section-h">📐 Cómo medirme</div>
+    <div class="card" style="padding:12px">
+      <div class="muted" style="font-size:.8rem;line-height:1.6">
+      <b style="color:var(--text)">Siempre igual, o no sirve para comparar:</b> domingo en la mañana, en ayunas, después del baño, <b>antes</b> de entrenar y mínimo 48 h después de haber entrenado esa zona. Tres tomas por medida, soltando la cinta entre cada una — anotá el promedio. Si dos tomas difieren más de 1.5 cm, repetí.</div></div>`;
+  GUIA.forEach(g=>{
+    h+=`<div class="card" style="padding:12px">
+      <div class="row" style="gap:12px;align-items:flex-start">
+        ${figuraSVG(g.band,g.arm)}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:800;font-size:.95rem;margin-bottom:7px">${g.ic} ${g.t}</div>
+          <ol style="margin:0;padding-left:16px;font-size:.79rem;line-height:1.55;color:var(--text2)">`;
+    g.pasos.forEach(x=> h+=`<li style="margin-bottom:4px">${x}</li>`);
+    h+=`</ol></div></div>
+      <div style="margin-top:9px;padding:8px 9px;background:rgba(255,138,76,.07);border-left:2px solid var(--orange);border-radius:0 8px 8px 0;font-size:.76rem;color:var(--text2);line-height:1.5">
+        <b style="color:var(--orange)">Error típico:</b> ${g.err}</div></div>`;
+  });
+  return h;
+}
+
 function renderMedidas(){
   const el=document.getElementById('v-medidas');
   const hist=S.measures.slice().sort((a,b)=>a.date.localeCompare(b.date));
@@ -1898,6 +1984,7 @@ function renderMedidas(){
     html+=`</div>`;
   }
 
+  html+=renderGuiaMedicion();
   el.innerHTML=html;
 }
 function fmtDate(iso){ const [y,m,d]=iso.split('-'); return `${d}/${m}`; }
