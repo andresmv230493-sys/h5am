@@ -511,7 +511,7 @@ const MEALS = [
    items:[
      {n:'Pechuga de pollo', q:'150 g ya cocida', cal:247, p:47, c:0, f:5},
      {n:'Vegetales', q:'250 g (brócoli, zanahoria, zucchini)', cal:80, p:5, c:16, f:1},
-     {n:'Papa cocida', q:'350 g', cal:304, p:7, c:70, f:0, rest:{q:'200 g', cal:174, p:4, c:40, f:0}},
+     {n:'Papa cocida', q:'250 g', cal:217, p:5, c:50, f:0, rest:{q:'150 g', cal:130, p:3, c:30, f:0}},
      {n:'Aceite de oliva', q:'1 cucharada (14 g)', cal:126, p:0, c:0, f:14},
    ],
    swaps:[
@@ -523,12 +523,11 @@ const MEALS = [
    items:[
      {n:'Batido de proteína', q:'1 scoop (25 g prot) en agua', cal:120, p:25, c:3, f:2},
      {n:'Café negro', q:'1 taza', cal:2, p:0, c:0, f:0},
-     {n:'Manzana', q:'1 mediana', cal:95, p:0, c:25, f:0, skipRest:true},
      {n:'Galleta dulce', q:'1 unidad', cal:70, p:1, c:10, f:3, skipRest:true},
    ],
    swaps:[
-     'La manzana y la galleta son solo días de entreno. Domingo se saltan.',
-     '1 manzana = 1 banano = 3 mandarinas',
+     'La galleta es solo días de entreno. Domingo se salta.',
+     '⚡ Fase definición (hasta 26-sep): sin fruta acá. Si tenés mucha hambre, 3 mandarinas.',
    ]},
   {k:'cena', ic:'🐟', name:'Cena', hora:'7:00 - 8:00 PM',
    items:[
@@ -576,10 +575,10 @@ const PHASES = [
 
 /* ---------- NUTRICIÓN CORREGIDA (déficit neto semanal) ---------- */
 const NUTRI = {
-  gym:    {cal:'~2,340', p:'196g', c:'245g', f:'70g', tipo:'Días de entreno', color:'var(--blue)', desc:'Lunes a sábado. Papa 350g + manzana y galleta en la merienda PM.'},
-  cardio: {cal:'~2,340', p:'196g', c:'245g', f:'70g', tipo:'Días de entreno', color:'var(--green)', desc:'Igual que los otros días de entreno.'},
-  rest:   {cal:'~2,045', p:'194g', c:'180g', f:'66g', tipo:'Domingo (descanso)', color:'var(--text2)', desc:'Papa baja a 200g, sin manzana ni galleta. El resto igual.'},
-  regla: 'BLOQUE PLAYA: comés casi lo mismo todos los días — así no tenés que pensar. Con 6 entrenos + 2 corridas + caminata quemás ~2,850 kcal/día, así que 2,340 es un déficit de ~500 kcal/día (moderado, no leve): ~0.5 kg de grasa por semana. Los carbos son altos a propósito: sin ellos no rendís en la semana 3-4, que es la más dura. Lo único que cambia el domingo: la papa, la manzana y la galleta.',
+  gym:    {cal:'~2,150', p:'196g', c:'200g', f:'70g', tipo:'Días de entreno', color:'var(--blue)', desc:'Lunes a sábado. Papa 250g, sin fruta en la merienda PM.'},
+  cardio: {cal:'~2,150', p:'196g', c:'200g', f:'70g', tipo:'Días de entreno', color:'var(--green)', desc:'Igual que los otros días de entreno.'},
+  rest:   {cal:'~1,975', p:'194g', c:'165g', f:'66g', tipo:'Domingo (descanso)', color:'var(--text2)', desc:'Papa baja a 150g y sin galleta.'},
+  regla: 'FASE DEFINICIÓN (hasta 26-sep). Ajuste del 08-sep: en 3 semanas subiste 1.2 kg y la cintura fue de 79 a 80 — el reloj sobreestima lo que quemás ~20-30%, así que 2,340 kcal resultaron ser superávit. Bajamos a ~2,150 para frenar la subida y secar. La proteína NO baja: es lo que protege todo lo que ganaste (pecho +3.5 cm en 3 semanas). Alcohol = le resta directo al six-pack.',
   dias: {1:'gym',2:'gym',3:'gym',4:'gym',5:'gym',6:'gym',7:'rest'},
 };
 
@@ -689,7 +688,7 @@ function syncUrl(){ return localStorage.getItem(SYNC_URL_KEY)||''; }
 let _syncT=null;
 function scheduleSync(){ if(!syncUrl()) return; clearTimeout(_syncT); _syncT=setTimeout(()=>syncNow(false),4000); }
 function syncPayload(){
-  const c=Object.assign({},S); delete c.photos; // fotos = pesadas, quedan solo en el cel
+  const c=Object.assign({},S); delete c.photos; delete c.objetivoImgs; // fotos = pesadas, quedan solo en el cel
   c._sentAt=new Date().toISOString();
   return JSON.stringify(c);
 }
@@ -1746,6 +1745,8 @@ function startRest(restStr){
    ================================================================= */
 const METRICS=[
   {k:'peso', ic:'⚖️', label:'Peso', unit:'kg', rev:null, target:null},
+  {k:'hombros', ic:'🦅', label:'Hombros', unit:'cm', rev:false, target:118},
+  {k:'cuello', ic:'🧣', label:'Cuello', unit:'cm', rev:null, target:null},
   {k:'pecho', ic:'👕', label:'Pecho', unit:'cm', rev:false, target:104},
   {k:'espalda', ic:'🔙', label:'Espalda', unit:'cm', rev:false, target:46},
   {k:'biceps_r', ic:'💪', label:'Brazo D', unit:'cm', rev:false, target:41},
@@ -1758,6 +1759,21 @@ const METRICS=[
   {k:'panto_r', ic:'🦶', label:'Pantor. D', unit:'cm', rev:false, target:40},
   {k:'panto_l', ic:'🦶', label:'Pantor. I', unit:'cm', rev:false, target:40},
 ];
+const OBJETIVO_IMGS=['objetivo-1.jpg','objetivo-2.jpg','objetivo-3.jpg'];
+function verObjetivo(i){
+  const imgs=(S.objetivoImgs&&S.objetivoImgs.length)?S.objetivoImgs:OBJETIVO_IMGS;
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:500;background:rgba(8,13,24,.96);display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.onclick=()=>ov.remove();
+  ov.innerHTML=`<img src="${imgs[i]}" style="max-width:100%;max-height:88vh;border-radius:14px">`;
+  document.body.appendChild(ov);
+}
+function subirObjetivo(ev){
+  const f=ev.target.files&&ev.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ if(!S.objetivoImgs) S.objetivoImgs=[]; S.objetivoImgs.push(r.result); save(); renderMedidas(); toast('Referencia agregada'); };
+  r.readAsDataURL(f);
+}
 function renderMedidas(){
   const el=document.getElementById('v-medidas');
   const hist=S.measures.slice().sort((a,b)=>a.date.localeCompare(b.date));
@@ -1769,6 +1785,40 @@ function renderMedidas(){
     ? `Base: <b>${fmtDate(baseline.date)}${baseline.m.peso?' · '+baseline.m.peso+' kg':''}</b>. Mídete en ayunas, misma hora. Compará cada 7 días.`
     : `Tomá tus medidas <b>hoy</b> para fijar tu base (Día 1). Mídete en ayunas. Después compará cada 7 días.`;
   let html=`<h2 class="title">Mis medidas</h2><p class="muted">${introTxt}</p>`;
+
+  // 🎯 OBJETIVO — imagen de referencia + brecha actual
+  const objImgs = (S.objetivoImgs && S.objetivoImgs.length) ? S.objetivoImgs : OBJETIVO_IMGS;
+  html+=`<div class="section-h">🎯 Cómo quiero quedar</div><div class="card" style="padding:12px">`;
+  if(objImgs.length){
+    html+=`<div style="display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:5px">`;
+    objImgs.forEach((src,i)=>{
+      html+=`<img src="${src}" onclick="verObjetivo(${i})" onerror="this.style.display='none'"
+        style="height:190px;border-radius:11px;flex-shrink:0;cursor:pointer;object-fit:cover;border:1px solid var(--border)">`;
+    });
+    html+=`</div>`;
+  } else {
+    html+=`<div class="muted" style="font-size:.8rem;text-align:center;padding:14px 6px">Todavía no hay imagen de referencia.</div>`;
+  }
+  if(latest){
+    const faltan=METRICS.filter(mt=>mt.target!=null&&latest.m[mt.k]!=null)
+      .map(mt=>({...mt, val:latest.m[mt.k], falta:mt.rev? latest.m[mt.k]-mt.target : mt.target-latest.m[mt.k]}))
+      .filter(x=>x.falta>0).sort((a,b)=>b.falta-a.falta).slice(0,4);
+    if(faltan.length){
+      html+=`<div style="margin-top:11px;padding-top:10px;border-top:1px solid var(--border)">
+        <div style="font-size:.74rem;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Lo que falta</div>`;
+      faltan.forEach(x=>{
+        html+=`<div class="row between" style="padding:3px 0;font-size:.82rem">
+          <span>${x.ic} ${x.label}</span>
+          <span><b style="color:var(--text)">${x.val}</b> <span class="muted">→ ${x.target}</span>
+          <b style="color:var(--orange);margin-left:6px">${x.rev?'-':'+'}${x.falta.toFixed(1)}</b></span></div>`;
+      });
+      html+=`</div>`;
+    }
+  }
+  html+=`<button class="btn btn-ghost btn-sm btn-block" style="margin-top:10px" onclick="document.getElementById('objUp').click()">🖼 Cambiar imagen de referencia</button>
+    <input type="file" id="objUp" accept="image/*" style="display:none" onchange="subirObjetivo(event)">
+    <div class="muted" style="font-size:.68rem;margin-top:6px;text-align:center">Sacate las fotos en el mismo ángulo para comparar de verdad.</div></div>`;
+
 
   // comparación última vs anterior (gap real en días)
   let gapTxt='vs. medición anterior';
