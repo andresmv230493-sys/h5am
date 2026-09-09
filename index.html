@@ -1745,21 +1745,21 @@ function startRest(restStr){
    ================================================================= */
 const METRICS=[
   {k:'peso', ic:'⚖️', label:'Peso', unit:'kg', rev:null, target:null},
-  {k:'hombros', ic:'🦅', label:'Hombros', unit:'cm', rev:false, target:118},
+  {k:'hombros', ic:'🦅', label:'Hombros', unit:'cm', rev:false, target:null},
   {k:'cuello', ic:'🧣', label:'Cuello', unit:'cm', rev:null, target:null},
-  {k:'pecho', ic:'👕', label:'Pecho', unit:'cm', rev:false, target:104},
-  {k:'espalda', ic:'🔙', label:'Espalda', unit:'cm', rev:false, target:46},
-  {k:'biceps_r', ic:'💪', label:'Brazo D', unit:'cm', rev:false, target:41},
-  {k:'biceps_l', ic:'💪', label:'Brazo I', unit:'cm', rev:false, target:41},
-  {k:'cintura', ic:'📏', label:'Cintura', unit:'cm', rev:true, target:null},
-  {k:'abdomen', ic:'🎯', label:'Abdomen', unit:'cm', rev:true, target:80},
-  {k:'gluteo', ic:'🍑', label:'Glúteo', unit:'cm', rev:false, target:101},
-  {k:'muslo_r', ic:'🦵', label:'Pierna D', unit:'cm', rev:false, target:58},
-  {k:'muslo_l', ic:'🦵', label:'Pierna I', unit:'cm', rev:false, target:58},
-  {k:'panto_r', ic:'🦶', label:'Pantor. D', unit:'cm', rev:false, target:40},
-  {k:'panto_l', ic:'🦶', label:'Pantor. I', unit:'cm', rev:false, target:40},
+  {k:'pecho', ic:'👕', label:'Pecho', unit:'cm', rev:false, target:102},
+  {k:'espalda', ic:'🔙', label:'Espalda (protocolo a revisar)', unit:'cm', rev:false, target:null},
+  {k:'biceps_r', ic:'💪', label:'Brazo D', unit:'cm', rev:false, target:38.5},
+  {k:'biceps_l', ic:'💪', label:'Brazo I', unit:'cm', rev:false, target:38},
+  {k:'cintura', ic:'📏', label:'Cintura', unit:'cm', rev:true, target:76.5},
+  {k:'abdomen', ic:'🎯', label:'Abdomen', unit:'cm', rev:true, target:77.5},
+  {k:'gluteo', ic:'🍑', label:'Glúteo', unit:'cm', rev:null, target:null},
+  {k:'muslo_r', ic:'🦵', label:'Pierna D', unit:'cm', rev:false, target:58.5},
+  {k:'muslo_l', ic:'🦵', label:'Pierna I', unit:'cm', rev:false, target:58.5},
+  {k:'panto_r', ic:'🦶', label:'Pantor. D', unit:'cm', rev:false, target:35},
+  {k:'panto_l', ic:'🦶', label:'Pantor. I', unit:'cm', rev:false, target:35},
 ];
-const OBJETIVO_IMGS=['objetivo-1.jpg','objetivo-2.jpg','objetivo-3.jpg'];
+const OBJETIVO_IMGS=['objetivo-1.jpg','objetivo-2.jpg','objetivo-3.jpg','objetivo-4.jpg'];
 function verObjetivo(i){
   const imgs=(S.objetivoImgs&&S.objetivoImgs.length)?S.objetivoImgs:OBJETIVO_IMGS;
   const ov=document.createElement('div');
@@ -1815,6 +1815,12 @@ function renderMedidas(){
       html+=`</div>`;
     }
   }
+  const yaHombros = latest && latest.m.hombros!=null;
+  if(!yaHombros){
+    html+=`<div style="margin-top:11px;padding:9px;background:rgba(255,138,76,.08);border:1px solid rgba(255,138,76,.25);border-radius:9px;font-size:.76rem;color:var(--orange);line-height:1.5">
+      📐 <b>Falta tu baseline de hombros y cuello.</b> Son las dos medidas que más te faltan: hombros manda el look que buscás, y cuello + abdomen + estatura te dan tu % de grasa real. Tomalas el domingo.</div>`;
+  }
+  html+=`<div class="muted" style="font-size:.7rem;margin-top:9px;line-height:1.5">Metas a marzo-2027, todas <b>a 13% de grasa</b>. Una circunferencia sin % de grasa no dice nada: el mismo número más seco es otro físico.</div>`;
   html+=`<button class="btn btn-ghost btn-sm btn-block" style="margin-top:10px" onclick="document.getElementById('objUp').click()">🖼 Cambiar imagen de referencia</button>
     <input type="file" id="objUp" accept="image/*" style="display:none" onchange="subirObjetivo(event)">
     <div class="muted" style="font-size:.68rem;margin-top:6px;text-align:center">Sacate las fotos en el mismo ángulo para comparar de verdad.</div></div>`;
