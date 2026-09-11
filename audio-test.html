@@ -1,0 +1,96 @@
+<title>Test de audio — 5AM</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{--bg:#0b1220;--sf:#141d33;--bd:#22304f;--lime:#c2f94f;--or:#ff8a4c;--tx:#e8eefc;--tx2:#9aa8c7}
+body{background:var(--bg);color:var(--tx);font:15px/1.55 -apple-system,system-ui,sans-serif;margin:0;padding:20px;max-width:520px;margin:0 auto}
+h1{font-size:1.3rem;margin:0 0 4px}.sub{color:var(--tx2);font-size:.85rem;margin-bottom:18px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:15px;margin-bottom:12px}
+button{background:var(--lime);color:#0b1220;border:0;border-radius:11px;padding:15px;font-size:1rem;font-weight:800;width:100%;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button.g{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+button:disabled{opacity:.4}
+ol{padding-left:20px;margin:8px 0}li{margin-bottom:7px;color:var(--tx2);font-size:.88rem}
+#log{font:12px/1.6 ui-monospace,Menlo,monospace;background:#080d18;border-radius:10px;padding:11px;max-height:210px;overflow:auto;white-space:pre-wrap;color:var(--tx2)}
+.big{font-size:2.4rem;font-weight:800;color:var(--lime);text-align:center;margin:6px 0}
+.row{display:flex;gap:9px}.row button{flex:1}
+b{color:var(--tx)}.warn{color:var(--or)}
+</style>
+
+<h1>Test de audio en segundo plano</h1>
+<div class="sub">Decide si 5AM puede ser PWA o necesita app nativa.</div>
+
+<div class="card">
+  <b>Cómo hacerlo</b>
+  <ol>
+    <li>Instalá esta página: <b>Compartir → Agregar a inicio</b>. Abrila desde el ícono, no desde Safari.</li>
+    <li>Poné <b>música en Spotify</b> y dejala sonando.</li>
+    <li>Volvé acá y tocá <b>Empezar</b>.</li>
+    <li><b>Bloqueá la pantalla</b> y metete el teléfono al bolsillo.</li>
+    <li>Esperá 2 minutos caminando. Escuchá qué pasa.</li>
+  </ol>
+</div>
+
+<div class="card">
+  <div class="big" id="cnt">—</div>
+  <div class="sub" style="text-align:center;margin:0 0 12px" id="st">Sin iniciar</div>
+  <button id="go">▶︎ Empezar test (2 min)</button>
+  <div class="row" style="margin-top:9px">
+    <button class="g" id="stop" disabled>Detener</button>
+    <button class="g" id="copy">Copiar log</button>
+  </div>
+</div>
+
+<div class="card">
+  <b>Qué anotar</b>
+  <ol>
+    <li>¿Cuántas voces escuchaste con la pantalla bloqueada? (deberían ser <b>4</b>)</li>
+    <li>La música, ¿<b>bajó</b> y volvió sola, o se <b>cortó</b>?</li>
+    <li>¿Siguió sonando al minuto 2 o murió antes?</li>
+  </ol>
+  <div class="sub warn" style="margin:0">4 voces + música que baja y vuelve = PWA sirve.<br>Se corta o muere = necesitamos Swift nativo.</div>
+</div>
+
+<div class="card"><div id="log">esperando…</div></div>
+
+<script>
+const L=document.getElementById('log'),C=document.getElementById('cnt'),S=document.getElementById('st');
+let n=0,t0=0,timers=[],silence=null;
+const log=m=>{const s=t0?((Date.now()-t0)/1000).toFixed(1)+'s':'0.0s';L.textContent=`[${s}] ${m}\n`+L.textContent;};
+
+// pista casi-silenciosa en loop: mantiene viva la sesión de audio con la pantalla bloqueada
+function makeSilence(){
+  const a=new Audio();
+  a.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAAAAA=';
+  a.loop=true; a.volume=0.01; return a;
+}
+function play(i){
+  const a=new Audio(`audio/v${i}.m4a`); a.volume=1;
+  a.onplay =()=>{n++;C.textContent=n;log(`▶ voz ${i} SONÓ`);};
+  a.onerror=()=>log(`✗ voz ${i} FALLÓ: ${a.error?a.error.code:'?'}`);
+  a.play().catch(e=>log(`✗ voz ${i} bloqueada: ${e.name}`));
+}
+document.getElementById('go').onclick=async()=>{
+  n=0;C.textContent='0';t0=Date.now();L.textContent='';
+  document.getElementById('go').disabled=true;document.getElementById('stop').disabled=false;
+  S.textContent='Corriendo — bloqueá la pantalla ahora';
+  log(`modo: ${navigator.standalone?'PWA instalada ✓':'Safari (instalala para el test real)'}`);
+  try{
+    if('mediaSession' in navigator){
+      navigator.mediaSession.metadata=new MediaMetadata({title:'Coach 5AM',artist:'Test'});
+      log('mediaSession: ok');
+    }
+    silence=makeSilence(); await silence.play(); log('pista de fondo: ok');
+  }catch(e){ log('pista de fondo falló: '+e.name); }
+  play(1); // inmediata, con la pantalla aún encendida
+  [[20,2],[60,3],[110,1]].forEach(([s,i])=>timers.push(setTimeout(()=>play(i),s*1000)));
+  timers.push(setTimeout(()=>{S.textContent=`Terminado — ${n} de 4 sonaron`;log(`FIN: ${n}/4`);},125000));
+};
+document.getElementById('stop').onclick=()=>{
+  timers.forEach(clearTimeout);timers=[];
+  if(silence){silence.pause();silence=null;}
+  S.textContent=`Detenido — ${n} de 4`;log('detenido a mano');
+  document.getElementById('go').disabled=false;document.getElementById('stop').disabled=true;
+};
+document.getElementById('copy').onclick=()=>navigator.clipboard.writeText(L.textContent).then(()=>alert('Log copiado'));
+document.addEventListener('visibilitychange',()=>log(document.hidden?'— pantalla bloqueada / app en fondo —':'— volviste a la pantalla —'));
+</script>
