@@ -2,39 +2,51 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
-:root{--bg:#0b1220;--sf:#141d33;--bd:#22304f;--lime:#c2f94f;--or:#ff8a4c;--tx:#e8eefc;--tx2:#9aa8c7}
-body{background:var(--bg);color:var(--tx);font:15px/1.55 -apple-system,system-ui,sans-serif;margin:0;padding:20px;max-width:520px;margin:0 auto}
-h1{font-size:1.3rem;margin:0 0 4px}.sub{color:var(--tx2);font-size:.85rem;margin-bottom:18px}
-.card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:15px;margin-bottom:12px}
-button{background:var(--lime);color:#0b1220;border:0;border-radius:11px;padding:15px;font-size:1rem;font-weight:800;width:100%;cursor:pointer;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0b1220;--sf:#141d33;--bd:#22304f;--lime:#c2f94f;--or:#ff8a4c;--red:#ff6b6b;--tx:#e8eefc;--tx2:#9aa8c7}
+body{background:var(--bg);color:var(--tx);font:15px/1.55 -apple-system,system-ui,sans-serif;margin:0 auto;padding:20px;max-width:520px}
+h1{font-size:1.25rem;margin:0 0 3px}.sub{color:var(--tx2);font-size:.85rem}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:15px;margin:12px 0}
+.card.off{opacity:.45;pointer-events:none}
+.step{display:inline-block;background:var(--bd);color:var(--tx);font-size:.68rem;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:20px;margin-bottom:9px}
+button{background:var(--lime);color:#0b1220;border:0;border-radius:11px;padding:15px;font-size:1rem;font-weight:800;width:100%;-webkit-tap-highlight-color:transparent}
 button.g{background:transparent;color:var(--tx);border:1px solid var(--bd)}
 button:disabled{opacity:.4}
-ol{padding-left:20px;margin:8px 0}li{margin-bottom:7px;color:var(--tx2);font-size:.88rem}
-#log{font:12px/1.6 ui-monospace,Menlo,monospace;background:#080d18;border-radius:10px;padding:11px;max-height:210px;overflow:auto;white-space:pre-wrap;color:var(--tx2)}
-.big{font-size:2.4rem;font-weight:800;color:var(--lime);text-align:center;margin:6px 0}
-.row{display:flex;gap:9px}.row button{flex:1}
-b{color:var(--tx)}.warn{color:var(--or)}
+.row{display:flex;gap:9px;margin-top:9px}.row button{flex:1}
+ol{padding-left:19px;margin:9px 0}li{margin-bottom:6px;color:var(--tx2);font-size:.87rem}
+#log{font:11.5px/1.6 ui-monospace,Menlo,monospace;background:#080d18;border-radius:10px;padding:11px;max-height:200px;overflow:auto;white-space:pre-wrap;color:var(--tx2)}
+.big{font-size:2.4rem;font-weight:800;color:var(--lime);text-align:center;margin:4px 0}
+b{color:var(--tx)}.warn{color:var(--or)}.bad{color:var(--red)}.ok{color:var(--lime)}
+.alert{background:rgba(255,138,76,.09);border:1px solid rgba(255,138,76,.3);border-radius:10px;padding:11px;font-size:.85rem;color:var(--or);margin-bottom:12px}
 </style>
 
-<h1>Test de audio en segundo plano</h1>
+<h1>Test de audio</h1>
 <div class="sub">Decide si 5AM puede ser PWA o necesita app nativa.</div>
 
-<div class="card">
-  <b>Cómo hacerlo</b>
-  <ol>
-    <li>Instalá esta página: <b>Compartir → Agregar a inicio</b>. Abrila desde el ícono, no desde Safari.</li>
-    <li>Poné <b>música en Spotify</b> y dejala sonando.</li>
-    <li>Volvé acá y tocá <b>Empezar</b>.</li>
-    <li><b>Bloqueá la pantalla</b> y metete el teléfono al bolsillo.</li>
-    <li>Esperá 2 minutos caminando. Escuchá qué pasa.</li>
-  </ol>
+<div class="alert">
+  ⚠️ <b>Antes de nada:</b> revisá que el <b>switch de silencio</b> del iPhone (el lateral, arriba del volumen) esté en <b>sonido</b>, no en silencio. En iOS el audio web lo respeta — en silencio no suena nada por más bien que esté el código.
 </div>
 
-<div class="card">
+<div class="card" id="c1">
+  <span class="step">PASO 1</span>
+  <div><b>¿Suena algo?</b></div>
+  <div class="sub" style="margin:5px 0 11px">Con la pantalla encendida. Si esto falla, el problema es el teléfono, no iOS.</div>
+  <button id="check">🔊 Probar sonido</button>
+  <div id="r1" class="sub" style="margin-top:10px"></div>
+</div>
+
+<div class="card off" id="c2">
+  <span class="step">PASO 2</span>
+  <div><b>Test en segundo plano</b></div>
+  <ol>
+    <li>Instalá la página: <b>Compartir → Agregar a inicio</b>. Abrila desde el ícono.</li>
+    <li>Poné <b>música en Spotify</b> y dejala sonando.</li>
+    <li>Tocá Empezar, <b>bloqueá la pantalla</b>, guardá el teléfono.</li>
+    <li>Esperá 2 minutos. Escuchá.</li>
+  </ol>
   <div class="big" id="cnt">—</div>
-  <div class="sub" style="text-align:center;margin:0 0 12px" id="st">Sin iniciar</div>
-  <button id="go">▶︎ Empezar test (2 min)</button>
-  <div class="row" style="margin-top:9px">
+  <div class="sub" style="text-align:center;margin-bottom:11px" id="st">Sin iniciar</div>
+  <button id="go">▶︎ Empezar (2 min)</button>
+  <div class="row">
     <button class="g" id="stop" disabled>Detener</button>
     <button class="g" id="copy">Copiar log</button>
   </div>
@@ -43,54 +55,84 @@ b{color:var(--tx)}.warn{color:var(--or)}
 <div class="card">
   <b>Qué anotar</b>
   <ol>
-    <li>¿Cuántas voces escuchaste con la pantalla bloqueada? (deberían ser <b>4</b>)</li>
-    <li>La música, ¿<b>bajó</b> y volvió sola, o se <b>cortó</b>?</li>
-    <li>¿Siguió sonando al minuto 2 o murió antes?</li>
+    <li>¿Cuántas voces escuchaste con la pantalla bloqueada? (son <b>4</b>)</li>
+    <li>La música, ¿<b>bajó</b> y volvió, se <b>cortó</b>, o siguió igual y las voces sonaron encima?</li>
+    <li>¿Seguía sonando al minuto 2?</li>
   </ol>
-  <div class="sub warn" style="margin:0">4 voces + música que baja y vuelve = PWA sirve.<br>Se corta o muere = necesitamos Swift nativo.</div>
 </div>
 
 <div class="card"><div id="log">esperando…</div></div>
 
 <script>
-const L=document.getElementById('log'),C=document.getElementById('cnt'),S=document.getElementById('st');
-let n=0,t0=0,timers=[],silence=null;
+const $=id=>document.getElementById(id), L=$('log');
+let n=0,t0=0,timers=[],keep=null;
 const log=m=>{const s=t0?((Date.now()-t0)/1000).toFixed(1)+'s':'0.0s';L.textContent=`[${s}] ${m}\n`+L.textContent;};
 
-// pista casi-silenciosa en loop: mantiene viva la sesión de audio con la pantalla bloqueada
-function makeSilence(){
-  const a=new Audio();
-  a.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAAAAA=';
-  a.loop=true; a.volume=0.01; return a;
+function mkAudio(src,{loop=false,vol=1}={}){
+  const a=new Audio(src);
+  a.loop=loop; a.volume=vol; a.preload='auto';
+  a.setAttribute('playsinline',''); a.playsInline=true;
+  return a;
 }
+
+// PASO 1 — ¿el teléfono reproduce algo?
+$('check').onclick=async()=>{
+  $('check').disabled=true; $('r1').innerHTML='probando…';
+  const a=mkAudio('audio/check.m4a');
+  let sono=false;
+  a.onplaying=()=>{sono=true;};
+  try{
+    await a.play();
+    await new Promise(r=>setTimeout(r,1600));
+    if(sono){
+      $('r1').innerHTML='<span class="ok">✓ Suena. Pasá al paso 2.</span>';
+      log('paso 1: audio OK');
+      $('c2').classList.remove('off');
+    }else{
+      $('r1').innerHTML='<span class="bad">✗ No sonó.</span> Revisá el switch de silencio y subí el volumen.';
+      log('paso 1: play() resolvió pero no hubo playing');
+    }
+  }catch(e){
+    $('r1').innerHTML='<span class="bad">✗ Bloqueado: '+e.name+'</span>';
+    log('paso 1 falló: '+e.name+' — '+e.message);
+  }
+  $('check').disabled=false;
+};
+
 function play(i){
-  const a=new Audio(`audio/v${i}.m4a`); a.volume=1;
-  a.onplay =()=>{n++;C.textContent=n;log(`▶ voz ${i} SONÓ`);};
-  a.onerror=()=>log(`✗ voz ${i} FALLÓ: ${a.error?a.error.code:'?'}`);
+  const a=mkAudio(`audio/v${i}.m4a`);
+  a.onplaying=()=>{n++;$('cnt').textContent=n;log(`▶ voz ${i} SONÓ`);};
+  a.onerror=()=>log(`✗ voz ${i} error código ${a.error?a.error.code:'?'}`);
   a.play().catch(e=>log(`✗ voz ${i} bloqueada: ${e.name}`));
 }
-document.getElementById('go').onclick=async()=>{
-  n=0;C.textContent='0';t0=Date.now();L.textContent='';
-  document.getElementById('go').disabled=true;document.getElementById('stop').disabled=false;
-  S.textContent='Corriendo — bloqueá la pantalla ahora';
-  log(`modo: ${navigator.standalone?'PWA instalada ✓':'Safari (instalala para el test real)'}`);
+
+// PASO 2 — segundo plano
+$('go').onclick=async()=>{
+  n=0;$('cnt').textContent='0';t0=Date.now();L.textContent='';
+  $('go').disabled=true;$('stop').disabled=false;
+  $('st').textContent='Corriendo — bloqueá la pantalla ahora';
+  log(`modo: ${navigator.standalone?'PWA instalada ✓':'⚠ Safari — instalala para el test real'}`);
   try{
     if('mediaSession' in navigator){
-      navigator.mediaSession.metadata=new MediaMetadata({title:'Coach 5AM',artist:'Test'});
+      navigator.mediaSession.metadata=new MediaMetadata({title:'Coach 5AM',artist:'Entrenamiento'});
+      navigator.mediaSession.playbackState='playing';
       log('mediaSession: ok');
     }
-    silence=makeSilence(); await silence.play(); log('pista de fondo: ok');
-  }catch(e){ log('pista de fondo falló: '+e.name); }
-  play(1); // inmediata, con la pantalla aún encendida
+  }catch(e){ log('mediaSession falló: '+e.name); }
+  try{
+    keep=mkAudio('audio/keepalive.m4a',{loop:true,vol:0.02});
+    await keep.play(); log('pista de fondo: sonando (3s en loop)');
+  }catch(e){ log('⚠ pista de fondo falló: '+e.name); }
+  play(1);
   [[20,2],[60,3],[110,1]].forEach(([s,i])=>timers.push(setTimeout(()=>play(i),s*1000)));
-  timers.push(setTimeout(()=>{S.textContent=`Terminado — ${n} de 4 sonaron`;log(`FIN: ${n}/4`);},125000));
+  timers.push(setTimeout(()=>{$('st').textContent=`Terminado — ${n} de 4`;log(`FIN: ${n}/4 sonaron`);},125000));
 };
-document.getElementById('stop').onclick=()=>{
+$('stop').onclick=()=>{
   timers.forEach(clearTimeout);timers=[];
-  if(silence){silence.pause();silence=null;}
-  S.textContent=`Detenido — ${n} de 4`;log('detenido a mano');
-  document.getElementById('go').disabled=false;document.getElementById('stop').disabled=true;
+  if(keep){keep.pause();keep=null;}
+  $('st').textContent=`Detenido — ${n} de 4`;log('detenido a mano');
+  $('go').disabled=false;$('stop').disabled=true;
 };
-document.getElementById('copy').onclick=()=>navigator.clipboard.writeText(L.textContent).then(()=>alert('Log copiado'));
-document.addEventListener('visibilitychange',()=>log(document.hidden?'— pantalla bloqueada / app en fondo —':'— volviste a la pantalla —'));
+$('copy').onclick=()=>navigator.clipboard.writeText(L.textContent).then(()=>alert('Log copiado'));
+document.addEventListener('visibilitychange',()=>log(document.hidden?'— pantalla bloqueada —':'— volviste —'));
 </script>
