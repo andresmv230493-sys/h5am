@@ -2,93 +2,81 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>
-:root{--bg:#0b1220;--sf:#141d33;--bd:#22304f;--lime:#c2f94f;--or:#ff8a4c;--red:#ff6b6b;--tx:#e8eefc;--tx2:#9aa8c7}
+:root{--bg:#0b1220;--sf:#141d33;--bd:#22304f;--lime:#c2f94f;--or:#ff8a4c;--red:#ff6b6b;--aqua:#5dd6ff;--tx:#e8eefc;--tx2:#9aa8c7}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--tx);font:15px/1.5 -apple-system,system-ui,sans-serif;margin:0 auto;padding:18px;max-width:520px}
 h1{font-size:1.2rem;margin:0}
 .ver{display:inline-block;background:var(--lime);color:#0b1220;font-size:.7rem;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:7px}
 .card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:15px;margin:11px 0}
-button{background:var(--lime);color:#0b1220;border:0;border-radius:11px;padding:16px;font-size:1rem;font-weight:800;width:100%;-webkit-tap-highlight-color:transparent}
+button{background:var(--lime);color:#0b1220;border:0;border-radius:11px;padding:15px;font-size:.97rem;font-weight:800;width:100%;-webkit-tap-highlight-color:transparent;margin-top:8px}
 button.g{background:transparent;color:var(--tx);border:1px solid var(--bd)}
 button:disabled{opacity:.35}
-.row{display:flex;gap:9px;margin-top:9px}.row button{flex:1}
 .sub{color:var(--tx2);font-size:.84rem}
-.res{margin-top:11px;padding:11px;border-radius:10px;font-size:.88rem;display:none}
-.res.y{display:block;background:rgba(194,249,79,.1);border:1px solid rgba(194,249,79,.35);color:var(--lime)}
-.res.n{display:block;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.35);color:var(--red)}
-#log{font:11.5px/1.55 ui-monospace,Menlo,monospace;background:#080d18;border-radius:10px;padding:11px;max-height:190px;overflow:auto;white-space:pre-wrap;color:var(--tx2)}
-.big{font-size:2.5rem;font-weight:800;color:var(--lime);text-align:center;margin:4px 0}
-b{color:var(--tx)}
-.alert{background:rgba(255,138,76,.1);border:1px solid rgba(255,138,76,.3);border-radius:10px;padding:12px;font-size:.86rem;color:var(--or)}
+#log{font:11.5px/1.55 ui-monospace,Menlo,monospace;background:#080d18;border-radius:10px;padding:11px;max-height:210px;overflow:auto;white-space:pre-wrap;color:var(--tx2)}
+b{color:var(--tx)}.aq{color:var(--aqua)}
+.alert{background:rgba(93,214,255,.09);border:1px solid rgba(93,214,255,.3);border-radius:10px;padding:12px;font-size:.86rem;color:var(--aqua)}
 .flash{position:fixed;inset:0;background:var(--lime);opacity:0;pointer-events:none;transition:opacity .12s;z-index:99}
-.flash.on{opacity:.85}
-ol{padding-left:19px;margin:8px 0}li{margin-bottom:6px;color:var(--tx2);font-size:.86rem}
+.flash.on{opacity:.8}
+table{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:9px}
+td{padding:6px 3px;border-top:1px solid var(--bd);color:var(--tx2)}
+td:first-child{color:var(--tx);font-weight:600}
+.big{font-size:2.4rem;font-weight:800;color:var(--lime);text-align:center;margin:4px 0}
 </style>
 
 <div class="flash" id="flash"></div>
-<h1>Test de audio <span class="ver">v3</span></h1>
-<div class="sub" style="margin-bottom:4px">Si no ves <b>v3</b> arriba, tenés la versión vieja en caché: cerrá y volvé a abrir.</div>
+<h1>Test de audio <span class="ver">v4</span></h1>
+<div class="sub" style="margin-bottom:10px">Si no dice <b>v4</b>, cerrá Safari del todo y volvé a entrar.</div>
 
 <div class="card">
-  <div class="alert">🔇 <b>Revisá el switch lateral del iPhone.</b> Si ves naranja, está en silencio — no va a sonar nada. Y subí el volumen con los botones mientras suena.</div>
-</div>
-
-<div class="card">
-  <div><b>A · Pitido generado</b></div>
-  <div class="sub" style="margin:4px 0 11px">Sin archivo, sin descarga. Prueba pura del teléfono.</div>
-  <button id="beep">🔔 Hacer un pitido (2 seg)</button>
-  <div class="res" id="rA"></div>
-</div>
-
-<div class="card">
-  <div><b>B · Archivo de voz</b></div>
-  <div class="sub" style="margin:4px 0 11px">Mismo formato que usaría el coach.</div>
-  <button id="voz">🗣 Reproducir voz</button>
-  <div class="res" id="rB"></div>
-</div>
-
-<div class="card">
-  <div><b>C · Segundo plano</b></div>
-  <div class="sub" style="margin:4px 0 9px">Solo si A o B sonaron. Poné Spotify, tocá Empezar, <b>bloqueá la pantalla</b>, esperá 2 min.</div>
-  <div class="big" id="cnt">—</div>
-  <div class="sub" style="text-align:center;margin-bottom:11px" id="st">Sin iniciar</div>
-  <button id="go">▶︎ Empezar (2 min)</button>
-  <div class="row">
-    <button class="g" id="stop" disabled>Detener</button>
-    <button class="g" id="copy">Copiar log</button>
+  <div class="alert">
+    <b>Lo que sabemos:</b> la voz suena, pero mata Spotify y no lo devuelve.<br>
+    <b>Lo que probamos ahora:</b> si Safari permite declarar la sesión de audio como <b>transient</b> — que baja la otra música y la devuelve sola.
   </div>
+  <div id="soporte" class="sub" style="margin-top:11px"></div>
+</div>
+
+<div class="card">
+  <div><b>Poné Spotify a sonar primero.</b></div>
+  <div class="sub" style="margin:5px 0 3px">Después probá cada modo. Fijate qué pasa con la música en cada uno.</div>
+  <button id="m1">1 · transient <span style="opacity:.7">(debería bajar y devolver)</span></button>
+  <button id="m2">2 · ambient <span style="opacity:.7">(debería mezclarse)</span></button>
+  <button id="m3">3 · transient-solo <span style="opacity:.7">(pausa y devuelve)</span></button>
+  <button class="g" id="m4">4 · playback <span style="opacity:.7">(lo que fallaba)</span></button>
+</div>
+
+<div class="card">
+  <div><b>Qué anotar en cada uno</b></div>
+  <table>
+    <tr><td>Bajó y volvió</td><td>✅ ducking real — PWA sirve</td></tr>
+    <tr><td>Sonó encima, sin bajar</td><td>✅ aceptable</td></tr>
+    <tr><td>Pausó y volvió sola</td><td>✅ aceptable</td></tr>
+    <tr><td>Mató la música</td><td>❌ ese modo no sirve</td></tr>
+    <tr><td>No se escuchó la voz</td><td>❌ ese modo no sirve</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <div><b>Fondo</b> <span class="sub">— solo con el modo que haya ganado</span></div>
+  <div class="big" id="cnt">—</div>
+  <div class="sub" style="text-align:center;margin-bottom:9px" id="st">Sin iniciar</div>
+  <button id="go" disabled>▶︎ Empezar (2 min)</button>
+  <button class="g" id="copy">Copiar log</button>
 </div>
 
 <div class="card"><div id="log">esperando…</div></div>
 
 <script>
-const $=id=>document.getElementById(id), L=$('log'), V='?v=3';
-let n=0,t0=0,timers=[],keep=null,ctx=null;
-const log=m=>{const s=t0?((Date.now()-t0)/1000).toFixed(1)+'s':'0.0s';L.textContent=`[${s}] ${m}\n`+L.textContent;};
+const $=id=>document.getElementById(id), L=$('log'), V='?v=4';
+let n=0,t0=Date.now(),timers=[],keep=null,ganador=null;
+const log=m=>{L.textContent=`[${((Date.now()-t0)/1000).toFixed(1)}s] ${m}\n`+L.textContent;};
 const flash=()=>{$('flash').classList.add('on');setTimeout(()=>$('flash').classList.remove('on'),160);};
-const res=(id,ok,html)=>{const e=$(id);e.className='res '+(ok?'y':'n');e.innerHTML=html;};
 
-// A — pitido por Web Audio: sin archivo, sin red, sin códec
-$('beep').onclick=async()=>{
-  $('beep').disabled=true;
-  try{
-    ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();
-    log('AudioContext estado inicial: '+ctx.state);
-    if(ctx.state==='suspended'){ await ctx.resume(); log('resume() -> '+ctx.state); }
-    const o=ctx.createOscillator(), g=ctx.createGain();
-    o.type='sine'; o.frequency.value=440;
-    g.gain.setValueAtTime(0.28, ctx.currentTime);
-    o.connect(g); g.connect(ctx.destination);
-    o.start(); flash();
-    setTimeout(()=>{o.stop();},2000);
-    log('pitido disparado · ctx='+ctx.state+' · sampleRate='+ctx.sampleRate);
-    res('rA', ctx.state==='running',
-      ctx.state==='running'
-        ? '¿Lo escuchaste?<br><b>Sí</b> → el teléfono está bien, probá B.<br><b>No</b> → es el switch de silencio o el volumen.'
-        : 'AudioContext quedó en <b>'+ctx.state+'</b>. iOS bloqueó el audio.');
-  }catch(e){ log('pitido falló: '+e.name+' — '+e.message); res('rA',false,'Error: '+e.name); }
-  setTimeout(()=>$('beep').disabled=false,2200);
-};
+// ¿existe la API?
+const AS = navigator.audioSession;
+$('soporte').innerHTML = AS
+  ? '<span class="aq">✓ navigator.audioSession disponible</span> — tipo actual: <b>'+(AS.type||'?')+'</b>'
+  : '<span style="color:var(--or)">✗ navigator.audioSession NO existe en este Safari.</span> Los modos van a caer al comportamiento por defecto.';
+log(AS ? 'audioSession soportada · type='+AS.type : 'audioSession NO soportada');
 
 function mkAudio(src,{loop=false,vol=1}={}){
   const a=new Audio(src+V);
@@ -97,23 +85,25 @@ function mkAudio(src,{loop=false,vol=1}={}){
   return a;
 }
 
-// B — archivo
-$('voz').onclick=async()=>{
-  $('voz').disabled=true;
-  const a=mkAudio('audio/check.m4a');
-  let sono=false;
-  a.onplaying=()=>{sono=true;flash();log('archivo: evento playing ✓');};
-  a.onerror=()=>log('archivo: error código '+(a.error?a.error.code:'?'));
+async function probar(tipo,btn){
+  $(btn).disabled=true;
   try{
+    if(AS){ AS.type=tipo; log(`audioSession.type = "${tipo}" → quedó en "${AS.type}"`); }
+    else log(`(sin API) intento modo ${tipo}`);
+    const a=mkAudio('audio/check.m4a');
+    a.onplaying=()=>{flash();log(`  ▶ voz sonó en modo ${tipo}`);};
+    a.onerror=()=>log(`  ✗ error ${a.error?a.error.code:'?'} en ${tipo}`);
     await a.play();
-    log('archivo: play() ok, readyState='+a.readyState);
-    await new Promise(r=>setTimeout(r,1800));
-    res('rB', sono, sono
-      ? 'Se reprodujo. ¿Lo <b>escuchaste</b>?<br>Si sí → pasá a C.'
-      : 'play() no falló pero nunca arrancó. Puede ser red o formato.');
-  }catch(e){ log('archivo bloqueado: '+e.name); res('rB',false,'Bloqueado: <b>'+e.name+'</b>'); }
-  $('voz').disabled=false;
-};
+    ganador=tipo;
+    $('go').disabled=false;
+    $('st').textContent='Listo con modo: '+tipo;
+  }catch(e){ log(`  ✗ ${tipo} bloqueado: ${e.name}`); }
+  setTimeout(()=>$(btn).disabled=false,2000);
+}
+$('m1').onclick=()=>probar('transient','m1');
+$('m2').onclick=()=>probar('ambient','m2');
+$('m3').onclick=()=>probar('transient-solo','m3');
+$('m4').onclick=()=>probar('playback','m4');
 
 function play(i){
   const a=mkAudio(`audio/v${i}.m4a`);
@@ -121,32 +111,27 @@ function play(i){
   a.onerror=()=>log(`✗ voz ${i} error ${a.error?a.error.code:'?'}`);
   a.play().catch(e=>log(`✗ voz ${i}: ${e.name}`));
 }
-
 $('go').onclick=async()=>{
-  n=0;$('cnt').textContent='0';t0=Date.now();L.textContent='';
-  $('go').disabled=true;$('stop').disabled=false;
-  $('st').textContent='Corriendo — bloqueá la pantalla';
-  log(`modo: ${navigator.standalone?'PWA instalada ✓':'⚠ Safari (instalala para el test real)'}`);
+  n=0;$('cnt').textContent='0';L.textContent='';t0=Date.now();
+  $('go').disabled=true;
+  $('st').textContent='Corriendo en modo '+ganador+' — bloqueá la pantalla';
+  log('modo sesión: '+ganador+' · '+(navigator.standalone?'PWA ✓':'⚠ Safari'));
+  try{ if(AS) AS.type=ganador; }catch(e){}
   try{
     if('mediaSession' in navigator){
       navigator.mediaSession.metadata=new MediaMetadata({title:'Coach 5AM',artist:'Entrenamiento'});
       navigator.mediaSession.playbackState='playing';
-      log('mediaSession ok');
     }
-  }catch(e){log('mediaSession: '+e.name);}
+  }catch(e){}
   try{ keep=mkAudio('audio/keepalive.m4a',{loop:true,vol:0.02}); await keep.play(); log('pista de fondo ok'); }
   catch(e){ log('⚠ pista de fondo: '+e.name); }
   play(1);
   [[20,2],[60,3],[110,1]].forEach(([s,i])=>timers.push(setTimeout(()=>play(i),s*1000)));
-  timers.push(setTimeout(()=>{$('st').textContent=`Terminado — ${n}/4`;log(`FIN ${n}/4`);},125000));
-};
-$('stop').onclick=()=>{
-  timers.forEach(clearTimeout);timers=[];
-  if(keep){keep.pause();keep=null;}
-  $('st').textContent=`Detenido — ${n}/4`;log('detenido');
-  $('go').disabled=false;$('stop').disabled=true;
+  timers.push(setTimeout(()=>{
+    if(keep){keep.pause();keep=null;}
+    $('st').textContent=`Terminado — ${n}/4`;log(`FIN ${n}/4 · modo ${ganador}`);$('go').disabled=false;
+  },125000));
 };
 $('copy').onclick=()=>navigator.clipboard.writeText(L.textContent).then(()=>alert('Log copiado'));
 document.addEventListener('visibilitychange',()=>log(document.hidden?'— pantalla bloqueada —':'— volviste —'));
-log('listo · v3');
 </script>
